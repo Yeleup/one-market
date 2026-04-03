@@ -11,7 +11,7 @@ PROD_COMPOSE := $(COMPOSE_BASE) -f docker-compose.yml
 cmd ?= about
 service ?= app
 
-.PHONY: help key-show up start rebuild down logs ps artisan shell migrate queue-restart npm-install \
+.PHONY: help key-show up start rebuild down logs ps artisan composer shell migrate queue-restart npm-install \
 	prod-up prod-start prod-down prod-logs prod-ps prod-artisan prod-shell \
 	prod-migrate prod-queue-restart prod-deploy
 
@@ -20,11 +20,12 @@ help:
 		'make up                  # local: build and start the full stack' \
 		'make key-show            # print a generated APP_KEY without starting the stack' \
 		'make start               # local: start without rebuild' \
-		'make rebuild             # local: rebuild and restart' \
+		'make rebuild             # local: rebuild and force recreate containers' \
 		'make down                # local: stop the stack' \
 		'make logs                # local: follow logs' \
 		'make ps                  # local: show container status' \
 		'make artisan cmd="..."   # local: run artisan command in app' \
+		'make composer cmd="..."  # local: run composer command in app' \
 		'make shell               # local: open shell in app container' \
 		'make migrate             # local: run migrations' \
 		'make npm-install         # local: install npm deps in vite container' \
@@ -48,7 +49,7 @@ start:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --remove-orphans
 
 rebuild:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --build --remove-orphans
+	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --build --force-recreate --remove-orphans
 
 down:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) down --remove-orphans
@@ -61,6 +62,9 @@ ps:
 
 artisan:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan $(cmd)
+
+composer:
+	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app composer $(cmd)
 
 shell:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) exec $(service) sh

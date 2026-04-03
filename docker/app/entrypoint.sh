@@ -35,15 +35,22 @@ prepare_application() {
             storage/framework/sessions \
             storage/framework/views \
             storage/logs
+        chmod -R ug+rwX \
+            bootstrap/cache \
+            storage/app/public \
+            storage/framework/cache \
+            storage/framework/sessions \
+            storage/framework/views \
+            storage/logs
+    else
+        chmod -R ug+rwX \
+            bootstrap/cache \
+            storage/app/public \
+            storage/framework/cache \
+            storage/framework/sessions \
+            storage/framework/views \
+            storage/logs >/dev/null 2>&1 || true
     fi
-
-    chmod -R ug+rwX \
-        bootstrap/cache \
-        storage/app/public \
-        storage/framework/cache \
-        storage/framework/sessions \
-        storage/framework/views \
-        storage/logs
 
     ln -sfn /var/www/html/storage/app/public /var/www/html/public/storage
     php artisan storage:link --no-interaction >/dev/null 2>&1 || true

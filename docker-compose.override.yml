@@ -2,6 +2,7 @@ x-local-php-environment: &local-php-environment
   APP_ENV: local
   APP_DEBUG: ${APP_DEBUG:-true}
   APP_OPTIMIZE: ${APP_OPTIMIZE:-0}
+  COMPOSER_HOME: /tmp/composer
 
 x-local-php-service: &local-php-service
   user: '${DOCKER_UID:-1000}:${DOCKER_GID:-1000}'
@@ -10,16 +11,13 @@ x-local-php-service: &local-php-service
   volumes:
     - .:/var/www/html
     - vendor:/var/www/html/vendor
-    - ./bootstrap/cache:/var/www/html/bootstrap/cache
     - ./storage/app/public:/var/www/html/storage/app/public
-    - ./storage/framework/cache:/var/www/html/storage/framework/cache
-    - ./storage/framework/sessions:/var/www/html/storage/framework/sessions
-    - ./storage/framework/views:/var/www/html/storage/framework/views
-    - ./storage/logs:/var/www/html/storage/logs
     - ./docker/app/php.local.ini:/usr/local/etc/php/conf.d/zz-local.ini:ro
 
 services:
   app:
+    build:
+      target: app-dev
     <<: *local-php-service
     environment:
       <<: *local-php-environment

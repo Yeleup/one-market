@@ -137,6 +137,8 @@ make ps
 - `JS` и `CSS` подхватываются через `vite`
 - локальная очередь работает через `queue:listen`, поэтому не требует `queue:restart` после каждой правки кода
 - `artisan make:*`, запущенный внутри `app`, создаёт файлы с UID/GID хоста, а не `root`
+- локальный `app` собирается с Composer и dev dependencies, поэтому `composer`, `boost:mcp`, Pint и Pest доступны прямо в `app`
+- локальный `app`, `queue` и `scheduler` используют общий `vendor` volume, поэтому зависимости не расходятся между контейнерами
 
 Если на машине UID/GID не `1000:1000`, поменяй `DOCKER_UID` и `DOCKER_GID` в `.env`:
 
@@ -157,6 +159,12 @@ make up
 make logs
 ```
 
+Если нужен shell в `app`:
+
+```bash
+make shell
+```
+
 ## Когда локально нужен rebuild
 
 `make rebuild` нужен, если поменялось что-то инфраструктурное:
@@ -167,7 +175,17 @@ make logs
 - файлы в [docker/app](docker/app)
 - файлы в [docker/nginx](docker/nginx)
 
-Если менялся `composer.json` или `composer.lock`, тоже нужен rebuild, потому что PHP-зависимости устанавливаются во время сборки image.
+Если менялся `composer.json` или `composer.lock`, rebuild не нужен. Локально зависимости ставятся прямо в `app`:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.override.yml exec app composer install
+```
+
+или:
+
+```bash
+make composer cmd="install"
+```
 
 Если менялся `package.json`, обычно нужен:
 
@@ -225,6 +243,12 @@ Artisan:
 make artisan cmd="about"
 ```
 
+Composer:
+
+```bash
+make composer cmd="require filament/filament:\"^5.0\""
+```
+
 Миграции:
 
 ```bash
@@ -241,6 +265,12 @@ make shell
 
 ```bash
 make npm-install
+```
+
+Laravel Boost MCP для IDE:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.override.yml exec app php artisan boost:mcp
 ```
 
 ## Production
@@ -362,9 +392,8 @@ make prod-shell
 
 ## Ограничения текущей схемы
 
-- PHP image собирается через `composer install --no-dev`, поэтому dev-only Composer пакеты внутри контейнеров не устанавливаются.
-- Локальная схема подходит для запуска приложения и обычной разработки, но не как полноценная замена отдельному dev-image с Composer tooling внутри контейнера.
-- Если нужен контейнерный запуск тестов, Pint, Pest или `composer install` с dev-зависимостями, лучше отдельно добавить dev-target или отдельный local PHP image.
+- Production PHP image собирается через `composer install --no-dev`, поэтому dev-only Composer пакеты в production-контейнеры не попадают.
+- Локально `app` собирается как dev-image. Если у тебя уже был старый `vendor` volume от прежней схемы, один раз обнови зависимости через `make composer cmd="install"`.
 
 ## Примечания
 
