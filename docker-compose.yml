@@ -1,40 +1,48 @@
+x-app-environment: &app-environment
+  APP_DEBUG: ${APP_DEBUG:-false}
+  APP_ENV: ${APP_ENV:-production}
+  APP_KEY: ${APP_KEY:-}
+  APP_NAME: ${APP_NAME:-Laravel}
+  APP_OPTIMIZE: ${APP_OPTIMIZE:-1}
+  APP_URL: ${APP_URL:-http://localhost:8000}
+  CACHE_STORE: ${CACHE_STORE:-database}
+  DB_CONNECTION: ${DB_CONNECTION:-mariadb}
+  DB_DATABASE: ${DB_DATABASE:-one_market}
+  DB_HOST: ${DB_HOST:-db}
+  DB_PASSWORD: ${DB_PASSWORD:-laravel}
+  DB_PORT: ${DB_PORT:-3306}
+  DB_USERNAME: ${DB_USERNAME:-laravel}
+  QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+  SESSION_DRIVER: ${SESSION_DRIVER:-database}
+  WAIT_FOR_DATABASE: ${WAIT_FOR_DATABASE:-1}
+
+x-app-service: &app-service
+  environment:
+    <<: *app-environment
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+  volumes:
+    - storage-public:/var/www/html/storage/app/public
+
 services:
   app:
+    <<: *app-service
     build:
       context: .
       dockerfile: Dockerfile
       target: app
     image: one-market-app
     environment:
-      APP_DEBUG: ${APP_DEBUG:-false}
-      APP_ENV: ${APP_ENV:-production}
-      APP_KEY: ${APP_KEY:-}
-      APP_NAME: ${APP_NAME:-Laravel}
-      APP_OPTIMIZE: ${APP_OPTIMIZE:-1}
-      APP_URL: ${APP_URL:-http://localhost:8000}
-      CACHE_STORE: ${CACHE_STORE:-database}
-      DB_CONNECTION: ${DB_CONNECTION:-mariadb}
-      DB_DATABASE: ${DB_DATABASE:-one_market}
-      DB_HOST: ${DB_HOST:-db}
-      DB_PASSWORD: ${DB_PASSWORD:-laravel}
-      DB_PORT: ${DB_PORT:-3306}
-      DB_USERNAME: ${DB_USERNAME:-laravel}
-      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+      <<: *app-environment
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-0}
-      SESSION_DRIVER: ${SESSION_DRIVER:-database}
-      WAIT_FOR_DATABASE: ${WAIT_FOR_DATABASE:-1}
-    depends_on:
-      db:
-        condition: service_healthy
     healthcheck:
       test: ['CMD', 'docker-healthcheck-fpm']
       interval: 10s
       timeout: 5s
       retries: 18
       start_period: 10s
-    restart: unless-stopped
-    volumes:
-      - storage-public:/var/www/html/storage/app/public
 
   web:
     build:
@@ -58,58 +66,14 @@ services:
       - storage-public:/var/www/html/storage/app/public:ro
 
   queue:
+    <<: *app-service
     image: one-market-app
     command: ['php', 'artisan', 'queue:work', '--sleep=3', '--tries=3', '--max-time=3600', '--no-interaction']
-    environment:
-      APP_DEBUG: ${APP_DEBUG:-false}
-      APP_ENV: ${APP_ENV:-production}
-      APP_KEY: ${APP_KEY:-}
-      APP_NAME: ${APP_NAME:-Laravel}
-      APP_OPTIMIZE: ${APP_OPTIMIZE:-1}
-      APP_URL: ${APP_URL:-http://localhost:8000}
-      CACHE_STORE: ${CACHE_STORE:-database}
-      DB_CONNECTION: ${DB_CONNECTION:-mariadb}
-      DB_DATABASE: ${DB_DATABASE:-one_market}
-      DB_HOST: ${DB_HOST:-db}
-      DB_PASSWORD: ${DB_PASSWORD:-laravel}
-      DB_PORT: ${DB_PORT:-3306}
-      DB_USERNAME: ${DB_USERNAME:-laravel}
-      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
-      SESSION_DRIVER: ${SESSION_DRIVER:-database}
-      WAIT_FOR_DATABASE: ${WAIT_FOR_DATABASE:-1}
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    volumes:
-      - storage-public:/var/www/html/storage/app/public
 
   scheduler:
+    <<: *app-service
     image: one-market-app
     command: ['sh', '-lc', 'while true; do php artisan schedule:run --no-interaction; sleep 60; done']
-    environment:
-      APP_DEBUG: ${APP_DEBUG:-false}
-      APP_ENV: ${APP_ENV:-production}
-      APP_KEY: ${APP_KEY:-}
-      APP_NAME: ${APP_NAME:-Laravel}
-      APP_OPTIMIZE: ${APP_OPTIMIZE:-1}
-      APP_URL: ${APP_URL:-http://localhost:8000}
-      CACHE_STORE: ${CACHE_STORE:-database}
-      DB_CONNECTION: ${DB_CONNECTION:-mariadb}
-      DB_DATABASE: ${DB_DATABASE:-one_market}
-      DB_HOST: ${DB_HOST:-db}
-      DB_PASSWORD: ${DB_PASSWORD:-laravel}
-      DB_PORT: ${DB_PORT:-3306}
-      DB_USERNAME: ${DB_USERNAME:-laravel}
-      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
-      SESSION_DRIVER: ${SESSION_DRIVER:-database}
-      WAIT_FOR_DATABASE: ${WAIT_FOR_DATABASE:-1}
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    volumes:
-      - storage-public:/var/www/html/storage/app/public
 
   db:
     image: mariadb:11.8
