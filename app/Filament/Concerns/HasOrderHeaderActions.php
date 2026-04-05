@@ -4,6 +4,7 @@ namespace App\Filament\Concerns;
 
 use App\Actions\Orders\ChangeOrderStatusAction;
 use App\Enums\OrderStatus;
+use App\Filament\Resources\OrderResource;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Throwable;
@@ -20,6 +21,8 @@ trait HasOrderHeaderActions
             $this->makeMoveToReadyForDeliveryAction(),
             $this->makeMoveToDeliveredAction(),
             $this->makeCancelOrderAction(),
+            OrderResource::makeDeleteAction()
+                ->successRedirectUrl(OrderResource::getUrl('index')),
         ];
     }
 

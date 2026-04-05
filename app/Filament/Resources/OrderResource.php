@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Actions\Orders\DeleteOrderAction;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use App\Filament\Resources\OrderResource\Pages;
@@ -10,6 +11,7 @@ use App\Filament\Resources\OrderResource\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\OrderResource\RelationManagers\StatusHistoriesRelationManager;
 use App\Models\Order;
 use BackedEnum;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -120,7 +122,22 @@ class OrderResource extends Resource
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                static::makeDeleteAction(),
             ]);
+    }
+
+    public static function makeDeleteAction(): DeleteAction
+    {
+        return DeleteAction::make()
+            ->label('Удалить')
+            ->visible(fn (Order $record): bool => $record->canBeDeleted())
+            ->modalDescription('Будут удалены сам заказ, его позиции, история статусов и связанные бонусные транзакции.')
+            ->successNotificationTitle('Заказ удалён.')
+            ->using(function (Order $record): bool {
+                app(DeleteOrderAction::class)->handle($record);
+
+                return true;
+            });
     }
 
     public static function getRelations(): array

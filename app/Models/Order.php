@@ -75,4 +75,9 @@ class Order extends Model
     {
         return $this->hasMany(BonusTransaction::class);
     }
+
+    public function canBeDeleted(): bool
+    {
+        return $this->status === OrderStatus::Cancelled;
+    }
 }
