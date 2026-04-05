@@ -1,0 +1,239 @@
+<?php
+
+namespace App\Filament\Resources\OrderResource\RelationManagers;
+
+use App\Actions\Orders\SyncOrderTotalsAction;
+use App\Enums\OrderStatus;
+use App\Models\OrderItem;
+use App\Models\Product;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+
+class ItemsRelationManager extends RelationManager
+{
+    protected static string $relationship = 'items';
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Select::make('product_id')
+                    ->relationship(
+                        name: 'product',
+                        titleAttribute: 'id',
+                        modifyQueryUsing: fn (Builder $query) => $query->with(['translations', 'images']),
+                    )
+                    ->getOptionLabelFromRecordUsing(
+                        fn (Product $record): string => sprintf(
+                            '#%d %s',
+                            $record->getKey(),
+                            $record->translations->first()?->name ?? 'Без названия',
+                        ),
+                    )
+                    ->searchable(['id'])
+                    ->preload()
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function (Get $get, Set $set, mixed $state): void {
+                        $product = filled($state) ? $this->findProduct((int) $state) : null;
+
+                        if (! $product) {
+                            return;
+                        }
+
+                        $set('product_name', $product->translations->first()?->name ?? "Product #{$product->getKey()}");
+                        $set('product_image', $product->image ?: $product->images->sortBy('sort_order')->first()?->image);
+                        $set('price_bonus', $product->bonus_price);
+                        $set('weight_grams', $product->weight_grams);
+
+                        $this->updateLineTotals($get, $set);
+                    }),
+                TextInput::make('product_name')
+                    ->required()
+                    ->maxLength(255),
+                TextInput::make('product_image')
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+                TextInput::make('price_bonus')
+                    ->numeric()
+                    ->required()
+                    ->default(0)
+                    ->live()
+                    ->afterStateUpdated(fn (Get $get, Set $set) => $this->updateLineTotals($get, $set)),
+                TextInput::make('weight_grams')
+                    ->numeric()
+                    ->required()
+                    ->default(0)
+                    ->suffix('g')
+                    ->live()
+                    ->afterStateUpdated(fn (Get $get, Set $set) => $this->updateLineTotals($get, $set)),
+                TextInput::make('quantity')
+                    ->numeric()
+                    ->required()
+                    ->default(1)
+                    ->minValue(1)
+                    ->live()
+                    ->afterStateUpdated(fn (Get $get, Set $set) => $this->updateLineTotals($get, $set)),
+                TextInput::make('line_total_bonus')
+                    ->numeric()
+                    ->disabled()
+                    ->dehydrated(false),
+                TextInput::make('line_total_weight_grams')
+                    ->numeric()
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->suffix('g'),
+            ])
+            ->columns(2);
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('product_name')
+            ->columns([
+                ImageColumn::make('product_image'),
+                TextColumn::make('product_name')->searchable(),
+                TextColumn::make('quantity')->sortable(),
+                TextColumn::make('price_bonus')->sortable(),
+                TextColumn::make('line_total_bonus')->sortable(),
+                TextColumn::make('weight_grams')->suffix(' g')->sortable(),
+                TextColumn::make('line_total_weight_grams')->suffix(' g')->sortable(),
+            ])
+            ->headerActions([
+                $this->makeCreateAction(),
+            ])
+            ->recordActions([
+                $this->makeEditAction(),
+                $this->makeDeleteAction(),
+            ])
+            ->defaultSort('id');
+    }
+
+    private function makeCreateAction(): CreateAction
+    {
+        return CreateAction::make()
+            ->hidden(fn (): bool => ! $this->canManageItems())
+            ->mutateDataUsing(fn (array $data): array => $this->normalizeItemData($data))
+            ->using(function (array $data): OrderItem {
+                /** @var OrderItem $item */
+                $item = DB::transaction(function () use ($data): OrderItem {
+                    $item = new OrderItem($data);
+
+                    $this->getOwnerRecord()->items()->save($item);
+
+                    app(SyncOrderTotalsAction::class)->handle($this->getOwnerRecord(), auth()->id());
+
+                    return $item;
+                });
+
+                return $item;
+            });
+    }
+
+    private function makeEditAction(): EditAction
+    {
+        return EditAction::make()
+            ->hidden(fn (): bool => ! $this->canManageItems())
+            ->mutateDataUsing(fn (array $data): array => $this->normalizeItemData($data))
+            ->using(function (OrderItem $record, array $data): OrderItem {
+                /** @var OrderItem $item */
+                $item = DB::transaction(function () use ($record, $data): OrderItem {
+                    $record->update($data);
+
+                    app(SyncOrderTotalsAction::class)->handle($this->getOwnerRecord(), auth()->id());
+
+                    return $record->fresh();
+                });
+
+                return $item;
+            });
+    }
+
+    private function makeDeleteAction(): DeleteAction
+    {
+        return DeleteAction::make()
+            ->hidden(fn (): bool => ! $this->canManageItems())
+            ->using(function (OrderItem $record): bool {
+                return DB::transaction(function () use ($record): bool {
+                    $result = (bool) $record->delete();
+
+                    if ($result) {
+                        app(SyncOrderTotalsAction::class)->handle($this->getOwnerRecord(), auth()->id());
+                    }
+
+                    return $result;
+                });
+            });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalizeItemData(array $data): array
+    {
+        $product = filled($data['product_id'] ?? null) ? $this->findProduct((int) $data['product_id']) : null;
+        $quantity = max(1, (int) ($data['quantity'] ?? 1));
+        $priceBonus = (int) ($data['price_bonus'] ?? $product?->bonus_price ?? 0);
+        $weightGrams = (int) ($data['weight_grams'] ?? $product?->weight_grams ?? 0);
+
+        return [
+            ...$data,
+            'quantity' => $quantity,
+            'price_bonus' => $priceBonus,
+            'weight_grams' => $weightGrams,
+            'product_name' => filled($data['product_name'] ?? null)
+                ? $data['product_name']
+                : ($product?->translations->first()?->name ?? "Product #{$data['product_id']}"),
+            'product_image' => filled($data['product_image'] ?? null)
+                ? $data['product_image']
+                : $this->getProductDefaultImage($product),
+            'line_total_bonus' => $priceBonus * $quantity,
+            'line_total_weight_grams' => $weightGrams * $quantity,
+        ];
+    }
+
+    private function canManageItems(): bool
+    {
+        return ! in_array($this->getOwnerRecord()->status, [OrderStatus::Delivered, OrderStatus::Cancelled], true);
+    }
+
+    private function updateLineTotals(Get $get, Set $set): void
+    {
+        $priceBonus = (int) ($get('price_bonus') ?? 0);
+        $weightGrams = (int) ($get('weight_grams') ?? 0);
+        $quantity = max(1, (int) ($get('quantity') ?? 1));
+
+        $set('line_total_bonus', $priceBonus * $quantity);
+        $set('line_total_weight_grams', $weightGrams * $quantity);
+    }
+
+    private function findProduct(int $productId): ?Product
+    {
+        return Product::query()
+            ->with(['translations', 'images'])
+            ->find($productId);
+    }
+
+    private function getProductDefaultImage(?Product $product): ?string
+    {
+        if (! $product) {
+            return null;
+        }
+
+        return $product->image ?: $product->images->sortBy('sort_order')->first()?->image;
+    }
+}
