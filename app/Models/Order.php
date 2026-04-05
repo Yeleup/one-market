@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\OrderRecipientType;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use Database\Factories\OrderFactory;
@@ -12,10 +13,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'client_id', 'institution_id', 'source', 'status',
+    'client_id', 'institution_id', 'source', 'recipient_type', 'status',
     'total_bonus', 'total_weight_grams', 'reserved_bonus_amount',
     'placed_at', 'status_changed_at', 'delivered_at', 'cancelled_at',
-    'created_by_user_id',
+    'created_by_user_id', 'recipient_first_name', 'recipient_last_name', 'recipient_bin',
 ])]
 class Order extends Model
 {
@@ -29,6 +30,7 @@ class Order extends Model
     {
         return [
             'source' => OrderSource::class,
+            'recipient_type' => OrderRecipientType::class,
             'status' => OrderStatus::class,
             'total_bonus' => 'integer',
             'total_weight_grams' => 'integer',
@@ -79,5 +81,18 @@ class Order extends Model
     public function canBeDeleted(): bool
     {
         return $this->status === OrderStatus::Cancelled;
+    }
+
+    public function getRecipientFullNameAttribute(): string
+    {
+        $firstName = $this->recipient_first_name ?: $this->client?->first_name;
+        $lastName = $this->recipient_last_name ?: $this->client?->last_name;
+
+        return trim(implode(' ', array_filter([$firstName, $lastName])));
+    }
+
+    public function getRecipientBinValueAttribute(): ?string
+    {
+        return $this->recipient_bin ?: $this->client?->bin;
     }
 }

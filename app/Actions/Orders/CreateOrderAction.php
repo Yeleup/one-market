@@ -3,6 +3,7 @@
 namespace App\Actions\Orders;
 
 use App\Enums\BonusTransactionType;
+use App\Enums\OrderRecipientType;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use App\Models\Client;
@@ -16,6 +17,10 @@ class CreateOrderAction
      * @param  array{
      *     client_id: int|string,
      *     institution_id: int|string,
+     *     recipient_type?: string|null,
+     *     recipient_first_name?: string|null,
+     *     recipient_last_name?: string|null,
+     *     recipient_bin?: string|null,
      *     total_bonus?: int|string|null,
      *     total_weight_grams?: int|string|null,
      *     placed_at?: mixed,
@@ -26,9 +31,9 @@ class CreateOrderAction
     {
         /** @var Order $order */
         $order = DB::transaction(function () use ($attributes, $performedByUserId, $source): Order {
-            $payload = $this->preparePayload($attributes, $source, $performedByUserId);
+            $client = $this->lockClient((int) $attributes['client_id']);
+            $payload = $this->preparePayload($attributes, $source, $performedByUserId, $client);
             $reserveAmount = (int) $payload['reserved_bonus_amount'];
-            $client = $this->lockClient((int) $payload['client_id']);
 
             $this->assertEnoughAvailableBonuses($client, $reserveAmount);
 
@@ -47,6 +52,10 @@ class CreateOrderAction
      * @param  array{
      *     client_id: int|string,
      *     institution_id: int|string,
+     *     recipient_type?: string|null,
+     *     recipient_first_name?: string|null,
+     *     recipient_last_name?: string|null,
+     *     recipient_bin?: string|null,
      *     total_bonus?: int|string|null,
      *     total_weight_grams?: int|string|null,
      *     placed_at?: mixed,
@@ -54,7 +63,7 @@ class CreateOrderAction
      * }  $attributes
      * @return array<string, mixed>
      */
-    private function preparePayload(array $attributes, OrderSource $source, ?int $performedByUserId): array
+    private function preparePayload(array $attributes, OrderSource $source, ?int $performedByUserId, Client $client): array
     {
         $totalBonus = (int) ($attributes['total_bonus'] ?? 0);
 
@@ -62,6 +71,7 @@ class CreateOrderAction
             'client_id' => (int) $attributes['client_id'],
             'institution_id' => (int) $attributes['institution_id'],
             'source' => $source,
+            ...$this->resolveRecipientPayload($attributes, $client),
             'status' => OrderStatus::New,
             'total_bonus' => $totalBonus,
             'total_weight_grams' => (int) ($attributes['total_weight_grams'] ?? 0),
@@ -72,6 +82,75 @@ class CreateOrderAction
             'cancelled_at' => null,
             'created_by_user_id' => $source === OrderSource::Admin ? $performedByUserId : null,
         ];
+    }
+
+    /**
+     * @param  array{
+     *     recipient_type?: string|null,
+     *     recipient_first_name?: string|null,
+     *     recipient_last_name?: string|null,
+     *     recipient_bin?: string|null
+     * }  $attributes
+     * @return array{
+     *     recipient_type: OrderRecipientType,
+     *     recipient_first_name: string,
+     *     recipient_last_name: string,
+     *     recipient_bin: string
+     * }
+     */
+    private function resolveRecipientPayload(array $attributes, Client $client): array
+    {
+        $recipientType = OrderRecipientType::tryFrom((string) ($attributes['recipient_type'] ?? OrderRecipientType::Client->value));
+
+        if (! $recipientType) {
+            throw ValidationException::withMessages([
+                'data.recipient_type' => 'Некорректный тип получателя заказа.',
+            ]);
+        }
+
+        if ($recipientType === OrderRecipientType::Client) {
+            return [
+                'recipient_type' => $recipientType,
+                'recipient_first_name' => $client->first_name,
+                'recipient_last_name' => $client->last_name,
+                'recipient_bin' => $client->bin,
+            ];
+        }
+
+        return [
+            'recipient_type' => $recipientType,
+            'recipient_first_name' => $this->requireRecipientValue(
+                $attributes,
+                'recipient_first_name',
+                'Имя получателя обязательно.',
+            ),
+            'recipient_last_name' => $this->requireRecipientValue(
+                $attributes,
+                'recipient_last_name',
+                'Фамилия получателя обязательна.',
+            ),
+            'recipient_bin' => $this->requireRecipientValue(
+                $attributes,
+                'recipient_bin',
+                'ИИН/БИН получателя обязателен.',
+            ),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function requireRecipientValue(array $attributes, string $key, string $message): string
+    {
+        $value = trim((string) ($attributes[$key] ?? ''));
+
+        if (! filled($value)) {
+            throw ValidationException::withMessages([
+                "data.{$key}" => $message,
+            ]);
+        }
+
+        return $value;
     }
 
     private function lockClient(int $clientId): Client

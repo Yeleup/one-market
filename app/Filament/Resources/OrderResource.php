@@ -3,12 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Actions\Orders\DeleteOrderAction;
+use App\Enums\OrderRecipientType;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers\BonusTransactionsRelationManager;
 use App\Filament\Resources\OrderResource\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\OrderResource\RelationManagers\StatusHistoriesRelationManager;
+use App\Models\Client;
 use App\Models\Order;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -19,6 +21,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -43,12 +46,24 @@ class OrderResource extends Resource
                     ->relationship(name: 'client', titleAttribute: 'login')
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->live(),
                 Select::make('institution_id')
                     ->relationship(name: 'institution', titleAttribute: 'id')
                     ->required()
                     ->searchable()
                     ->preload(),
+                Select::make('recipient_type')
+                    ->label('Получатель')
+                    ->options([
+                        OrderRecipientType::Client->value => 'Сам клиент',
+                        OrderRecipientType::Other->value => 'Другой получатель',
+                    ])
+                    ->default(OrderRecipientType::Client->value)
+                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                    ->dehydrated(fn (string $operation): bool => $operation === 'create')
+                    ->live()
+                    ->required(),
                 Select::make('source')
                     ->options(OrderSource::class)
                     ->default(OrderSource::Admin)
@@ -60,6 +75,53 @@ class OrderResource extends Resource
                     ->disabled(fn (string $operation): bool => $operation !== 'create')
                     ->dehydrated(fn (string $operation): bool => $operation === 'create')
                     ->required(),
+                Placeholder::make('recipient_snapshot_hint')
+                    ->label('Данные получателя')
+                    ->content(fn (Get $get, ?Order $record): string => static::getRecipientPreview($get, $record))
+                    ->hidden(
+                        fn (Get $get, string $operation): bool => $operation !== 'create'
+                            || $get('recipient_type') !== OrderRecipientType::Client->value
+                    )
+                    ->columnSpanFull(),
+                TextInput::make('recipient_first_name')
+                    ->label('Имя получателя')
+                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
+                    ->hidden(
+                        fn (Get $get, string $operation): bool => $operation === 'create'
+                            && $get('recipient_type') !== OrderRecipientType::Other->value
+                    )
+                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                    ->dehydrated(
+                        fn (Get $get, string $operation): bool => $operation === 'create'
+                            && $get('recipient_type') === OrderRecipientType::Other->value
+                    )
+                    ->maxLength(255),
+                TextInput::make('recipient_last_name')
+                    ->label('Фамилия получателя')
+                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
+                    ->hidden(
+                        fn (Get $get, string $operation): bool => $operation === 'create'
+                            && $get('recipient_type') !== OrderRecipientType::Other->value
+                    )
+                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                    ->dehydrated(
+                        fn (Get $get, string $operation): bool => $operation === 'create'
+                            && $get('recipient_type') === OrderRecipientType::Other->value
+                    )
+                    ->maxLength(255),
+                TextInput::make('recipient_bin')
+                    ->label('ИИН / БИН получателя')
+                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
+                    ->hidden(
+                        fn (Get $get, string $operation): bool => $operation === 'create'
+                            && $get('recipient_type') !== OrderRecipientType::Other->value
+                    )
+                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                    ->dehydrated(
+                        fn (Get $get, string $operation): bool => $operation === 'create'
+                            && $get('recipient_type') === OrderRecipientType::Other->value
+                    )
+                    ->maxLength(255),
                 Placeholder::make('items_management_hint')
                     ->label('Товары')
                     ->content('Позиции заказа добавляются после сохранения заказа в блоке "Items" на странице редактирования.')
@@ -98,12 +160,49 @@ class OrderResource extends Resource
             ]);
     }
 
+    private static function getRecipientPreview(Get $get, ?Order $record): string
+    {
+        if ($record) {
+            return static::formatRecipientPreview($record->recipient_full_name, $record->recipient_bin_value);
+        }
+
+        $clientId = $get('client_id');
+
+        if (! filled($clientId)) {
+            return 'Выберите клиента, и данные получателя заполнятся из его карточки.';
+        }
+
+        /** @var Client|null $client */
+        $client = Client::query()->find($clientId);
+
+        if (! $client) {
+            return 'Клиент не найден.';
+        }
+
+        return static::formatRecipientPreview($client->full_name, $client->bin);
+    }
+
+    private static function formatRecipientPreview(string $fullName, ?string $bin): string
+    {
+        if (! filled($fullName) && ! filled($bin)) {
+            return 'Данные получателя не заполнены.';
+        }
+
+        if (filled($fullName) && filled($bin)) {
+            return sprintf('%s, %s', $fullName, $bin);
+        }
+
+        return filled($fullName) ? $fullName : (string) $bin;
+    }
+
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('client.login')->searchable(),
+                TextColumn::make('recipient_full_name')
+                    ->label('Recipient'),
                 TextColumn::make('institution.translations.name')->label('Institution'),
                 TextColumn::make('source')->badge(),
                 TextColumn::make('status')->badge(),
