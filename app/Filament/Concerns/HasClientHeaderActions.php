@@ -29,17 +29,17 @@ trait HasClientHeaderActions
     protected function makeAccrueBonusesAction(): Action
     {
         return Action::make('accrueBonuses')
-            ->label('Начислить бонусы')
+            ->label(__('admin.actions.client.accrue_bonuses'))
             ->icon('heroicon-o-plus-circle')
             ->color('success')
             ->form([
                 TextInput::make('amount')
-                    ->label('Количество бонусов')
+                    ->label(__('admin.common.fields.amount'))
                     ->numeric()
                     ->required()
                     ->minValue(1),
                 Textarea::make('comment')
-                    ->label('Комментарий')
+                    ->label(__('admin.common.fields.comment'))
                     ->rows(3),
             ])
             ->action(function (array $data): void {
@@ -53,7 +53,7 @@ trait HasClientHeaderActions
                 } catch (Throwable $exception) {
                     Notification::make()
                         ->danger()
-                        ->title('Не удалось начислить бонусы.')
+                        ->title(__('admin.actions.client.notifications.accrue_failed'))
                         ->body($exception->getMessage())
                         ->send();
 
@@ -64,7 +64,7 @@ trait HasClientHeaderActions
 
                 Notification::make()
                     ->success()
-                    ->title('Бонусы начислены.')
+                    ->title(__('admin.actions.client.notifications.accrued'))
                     ->send();
             });
     }
@@ -72,17 +72,17 @@ trait HasClientHeaderActions
     protected function makeManualDebitBonusesAction(): Action
     {
         return Action::make('manualDebitBonuses')
-            ->label('Списать бонусы')
+            ->label(__('admin.actions.client.debit_bonuses'))
             ->icon('heroicon-o-minus-circle')
             ->color('danger')
             ->form([
                 TextInput::make('amount')
-                    ->label('Количество бонусов')
+                    ->label(__('admin.common.fields.amount'))
                     ->numeric()
                     ->required()
                     ->minValue(1),
                 Textarea::make('comment')
-                    ->label('Комментарий')
+                    ->label(__('admin.common.fields.comment'))
                     ->rows(3),
             ])
             ->action(function (array $data): void {
@@ -96,7 +96,7 @@ trait HasClientHeaderActions
                 } catch (Throwable $exception) {
                     Notification::make()
                         ->danger()
-                        ->title('Недостаточно доступных бонусов.')
+                        ->title(__('admin.actions.client.notifications.debit_failed'))
                         ->body($exception->getMessage())
                         ->send();
 
@@ -107,7 +107,7 @@ trait HasClientHeaderActions
 
                 Notification::make()
                     ->success()
-                    ->title('Бонусы списаны.')
+                    ->title(__('admin.actions.client.notifications.debited'))
                     ->send();
             });
     }
@@ -115,12 +115,12 @@ trait HasClientHeaderActions
     protected function makeResetClientPasswordAction(): Action
     {
         return Action::make('resetClientPassword')
-            ->label('Сбросить пароль')
+            ->label(__('admin.actions.client.reset_password'))
             ->icon('heroicon-o-key')
             ->color('gray')
             ->form([
                 TextInput::make('password')
-                    ->label('Новый пароль')
+                    ->label(__('admin.common.fields.new_password'))
                     ->password()
                     ->required()
                     ->rule(Password::defaults()),
@@ -134,7 +134,7 @@ trait HasClientHeaderActions
 
                 Notification::make()
                     ->success()
-                    ->title('Пароль клиента обновлён.')
+                    ->title(__('admin.actions.client.notifications.password_updated'))
                     ->send();
             });
     }
@@ -142,7 +142,7 @@ trait HasClientHeaderActions
     protected function makeToggleClientActiveAction(): Action
     {
         return Action::make('toggleClientActive')
-            ->label(fn (): string => $this->getRecord()->is_active ? 'Деактивировать' : 'Активировать')
+            ->label(fn (): string => $this->getRecord()->is_active ? __('admin.common.actions.deactivate') : __('admin.common.actions.activate'))
             ->icon(fn (): string => $this->getRecord()->is_active ? 'heroicon-o-no-symbol' : 'heroicon-o-check-circle')
             ->color(fn (): string => $this->getRecord()->is_active ? 'danger' : 'success')
             ->requiresConfirmation()
@@ -155,7 +155,7 @@ trait HasClientHeaderActions
 
                 Notification::make()
                     ->success()
-                    ->title('Статус клиента обновлён.')
+                    ->title(__('admin.actions.client.notifications.status_updated'))
                     ->send();
             });
     }

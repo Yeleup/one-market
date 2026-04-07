@@ -29,56 +29,56 @@ trait HasOrderHeaderActions
     protected function makeMoveToProcessingAction(): Action
     {
         return Action::make('markOrderAsProcessing')
-            ->label('В обработку')
+            ->label(__('admin.actions.order.move_to_processing'))
             ->color('gray')
             ->icon('heroicon-o-arrow-path')
             ->visible(fn (): bool => $this->getRecord()->status === OrderStatus::New)
             ->requiresConfirmation()
             ->action(fn (): mixed => $this->transitionOrderStatus(
                 OrderStatus::Processing,
-                'Статус заказа изменён на "В обработке".',
+                __('admin.actions.order.notifications.processing'),
             )->send());
     }
 
     protected function makeMoveToReadyForDeliveryAction(): Action
     {
         return Action::make('markOrderAsReadyForDelivery')
-            ->label('Готов к доставке')
+            ->label(__('admin.actions.order.move_to_ready_for_delivery'))
             ->color('info')
             ->icon('heroicon-o-truck')
             ->visible(fn (): bool => $this->getRecord()->status === OrderStatus::Processing)
             ->requiresConfirmation()
             ->action(fn (): mixed => $this->transitionOrderStatus(
                 OrderStatus::ReadyForDelivery,
-                'Статус заказа изменён на "Готов к доставке".',
+                __('admin.actions.order.notifications.ready_for_delivery'),
             )->send());
     }
 
     protected function makeMoveToDeliveredAction(): Action
     {
         return Action::make('markOrderAsDelivered')
-            ->label('Доставлено')
+            ->label(__('admin.actions.order.move_to_delivered'))
             ->color('success')
             ->icon('heroicon-o-check-circle')
             ->visible(fn (): bool => $this->getRecord()->status === OrderStatus::ReadyForDelivery)
             ->requiresConfirmation()
             ->action(fn (): mixed => $this->transitionOrderStatus(
                 OrderStatus::Delivered,
-                'Заказ отмечен как доставленный.',
+                __('admin.actions.order.notifications.delivered'),
             )->send());
     }
 
     protected function makeCancelOrderAction(): Action
     {
         return Action::make('cancelOrder')
-            ->label('Отменить')
+            ->label(__('admin.actions.order.cancel'))
             ->color('danger')
             ->icon('heroicon-o-x-circle')
             ->visible(fn (): bool => ! in_array($this->getRecord()->status, [OrderStatus::Delivered, OrderStatus::Cancelled], true))
             ->requiresConfirmation()
             ->action(fn (): mixed => $this->transitionOrderStatus(
                 OrderStatus::Cancelled,
-                'Заказ отменён.',
+                __('admin.actions.order.notifications.cancelled'),
             )->send());
     }
 
@@ -93,7 +93,7 @@ trait HasOrderHeaderActions
         } catch (Throwable $exception) {
             return Notification::make()
                 ->danger()
-                ->title('Не удалось изменить статус заказа.')
+                ->title(__('admin.actions.order.notifications.failed'))
                 ->body($exception->getMessage());
         }
 

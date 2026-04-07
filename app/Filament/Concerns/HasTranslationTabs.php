@@ -33,7 +33,7 @@ trait HasTranslationTabs
         $languages = static::getFormLanguages();
         $activeTab = $languages->search(fn (Language $language): bool => $language->is_default);
 
-        return Tabs::make('Translations')
+        return Tabs::make(__('admin.tabs.translations'))
             ->tabs(
                 $languages
                     ->map(

@@ -8,6 +8,7 @@ use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
@@ -15,6 +16,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\File;
 use UnitEnum;
 
 class LanguageResource extends Resource
@@ -27,38 +29,71 @@ class LanguageResource extends Resource
 
     protected static ?int $navigationSort = 7;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.resources.language.navigation_label');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.resources.language.model_label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.resources.language.plural_model_label');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                TextInput::make('code')
+                Select::make('code')
+                    ->label(__('admin.common.fields.code'))
+                    ->options(static::getAvailableLanguageOptions())
+                    ->searchable()
+                    ->preload()
                     ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(10),
+                    ->unique(ignoreRecord: true),
                 TextInput::make('name')
+                    ->label(__('admin.common.fields.name'))
                     ->required()
                     ->maxLength(255),
                 Toggle::make('is_default')
+                    ->label(__('admin.common.fields.is_default'))
                     ->default(false)
-                    ->helperText('Если включить, у остальных языков default будет снят автоматически.'),
+                    ->helperText(__('admin.resources.language.fields.default_helper')),
                 Toggle::make('is_active')
+                    ->label(__('admin.common.fields.is_active'))
                     ->default(true),
                 TextInput::make('sort_order')
+                    ->label(__('admin.common.fields.sort_order'))
                     ->numeric()
                     ->default(0),
             ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected static function getAvailableLanguageOptions(): array
+    {
+        return collect(File::directories(lang_path()))
+            ->mapWithKeys(fn (string $directory): array => [basename($directory) => basename($directory)])
+            ->sortKeys()
+            ->all();
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('id')->sortable(),
-                TextColumn::make('code')->searchable(),
-                TextColumn::make('name')->searchable(),
-                IconColumn::make('is_default')->boolean(),
-                IconColumn::make('is_active')->boolean(),
-                TextColumn::make('sort_order')->sortable(),
+                TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
+                TextColumn::make('code')->label(__('admin.common.fields.code'))->searchable(),
+                TextColumn::make('name')->label(__('admin.common.fields.name'))->searchable(),
+                IconColumn::make('is_default')->label(__('admin.common.fields.is_default'))->boolean(),
+                IconColumn::make('is_active')->label(__('admin.common.fields.is_active'))->boolean(),
+                TextColumn::make('sort_order')->label(__('admin.common.fields.sort_order'))->sortable(),
             ])
             ->defaultSort('sort_order')
             ->recordActions([

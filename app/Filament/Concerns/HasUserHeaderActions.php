@@ -23,12 +23,12 @@ trait HasUserHeaderActions
     protected function makeResetUserPasswordAction(): Action
     {
         return Action::make('resetUserPassword')
-            ->label('Сбросить пароль')
+            ->label(__('admin.actions.user.reset_password'))
             ->icon('heroicon-o-key')
             ->color('gray')
             ->form([
                 TextInput::make('password')
-                    ->label('Новый пароль')
+                    ->label(__('admin.common.fields.new_password'))
                     ->password()
                     ->required()
                     ->rule(Password::defaults()),
@@ -46,7 +46,7 @@ trait HasUserHeaderActions
 
                 Notification::make()
                     ->success()
-                    ->title('Пароль пользователя обновлён.')
+                    ->title(__('admin.actions.user.notifications.password_updated'))
                     ->send();
             });
     }
@@ -54,7 +54,7 @@ trait HasUserHeaderActions
     protected function makeToggleUserActiveAction(): Action
     {
         return Action::make('toggleUserActive')
-            ->label(fn (): string => $this->getRecord()->is_active ? 'Деактивировать' : 'Активировать')
+            ->label(fn (): string => $this->getRecord()->is_active ? __('admin.common.actions.deactivate') : __('admin.common.actions.activate'))
             ->icon(fn (): string => $this->getRecord()->is_active ? 'heroicon-o-no-symbol' : 'heroicon-o-check-circle')
             ->color(fn (): string => $this->getRecord()->is_active ? 'danger' : 'success')
             ->requiresConfirmation()
@@ -71,7 +71,7 @@ trait HasUserHeaderActions
 
                 Notification::make()
                     ->success()
-                    ->title('Статус пользователя обновлён.')
+                    ->title(__('admin.actions.user.notifications.status_updated'))
                     ->send();
             });
     }

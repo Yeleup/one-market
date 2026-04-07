@@ -19,17 +19,24 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class ItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'items';
 
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('admin.relation_managers.items');
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 Select::make('product_id')
+                    ->label(__('admin.common.fields.product'))
                     ->relationship(
                         name: 'product',
                         titleAttribute: 'id',
@@ -39,7 +46,7 @@ class ItemsRelationManager extends RelationManager
                         fn (Product $record): string => sprintf(
                             '#%d %s',
                             $record->getKey(),
-                            $record->translations->first()?->name ?? 'Без названия',
+                            $record->translations->first()?->name ?? __('admin.common.messages.untitled'),
                         ),
                     )
                     ->searchable(['id'])
@@ -53,7 +60,7 @@ class ItemsRelationManager extends RelationManager
                             return;
                         }
 
-                        $set('product_name', $product->translations->first()?->name ?? "Product #{$product->getKey()}");
+                        $set('product_name', $product->translations->first()?->name ?? sprintf('%s #%d', __('admin.resources.product.model_label'), $product->getKey()));
                         $set('product_image', $product->image ?: $product->images->sortBy('sort_order')->first()?->image);
                         $set('price_bonus', $product->bonus_price);
                         $set('weight_grams', $product->weight_grams);
@@ -61,18 +68,22 @@ class ItemsRelationManager extends RelationManager
                         $this->updateLineTotals($get, $set);
                     }),
                 TextInput::make('product_name')
+                    ->label(__('admin.common.fields.product_name'))
                     ->required()
                     ->maxLength(255),
                 TextInput::make('product_image')
+                    ->label(__('admin.common.fields.product_image'))
                     ->maxLength(255)
                     ->columnSpanFull(),
                 TextInput::make('price_bonus')
+                    ->label(__('admin.common.fields.price_bonus'))
                     ->numeric()
                     ->required()
                     ->default(0)
                     ->live()
                     ->afterStateUpdated(fn (Get $get, Set $set) => $this->updateLineTotals($get, $set)),
                 TextInput::make('weight_grams')
+                    ->label(__('admin.common.fields.weight'))
                     ->numeric()
                     ->required()
                     ->default(0)
@@ -80,6 +91,7 @@ class ItemsRelationManager extends RelationManager
                     ->live()
                     ->afterStateUpdated(fn (Get $get, Set $set) => $this->updateLineTotals($get, $set)),
                 TextInput::make('quantity')
+                    ->label(__('admin.common.fields.quantity'))
                     ->numeric()
                     ->required()
                     ->default(1)
@@ -87,10 +99,12 @@ class ItemsRelationManager extends RelationManager
                     ->live()
                     ->afterStateUpdated(fn (Get $get, Set $set) => $this->updateLineTotals($get, $set)),
                 TextInput::make('line_total_bonus')
+                    ->label(__('admin.common.fields.line_total_bonus'))
                     ->numeric()
                     ->disabled()
                     ->dehydrated(false),
                 TextInput::make('line_total_weight_grams')
+                    ->label(__('admin.common.fields.line_total_weight'))
                     ->numeric()
                     ->disabled()
                     ->dehydrated(false)
@@ -104,13 +118,13 @@ class ItemsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('product_name')
             ->columns([
-                ImageColumn::make('product_image'),
-                TextColumn::make('product_name')->searchable(),
-                TextColumn::make('quantity')->sortable(),
-                TextColumn::make('price_bonus')->sortable(),
-                TextColumn::make('line_total_bonus')->sortable(),
-                TextColumn::make('weight_grams')->suffix(' g')->sortable(),
-                TextColumn::make('line_total_weight_grams')->suffix(' g')->sortable(),
+                ImageColumn::make('product_image')->label(__('admin.common.fields.product_image')),
+                TextColumn::make('product_name')->label(__('admin.common.fields.product_name'))->searchable(),
+                TextColumn::make('quantity')->label(__('admin.common.fields.quantity'))->sortable(),
+                TextColumn::make('price_bonus')->label(__('admin.common.fields.price_bonus'))->sortable(),
+                TextColumn::make('line_total_bonus')->label(__('admin.common.fields.line_total_bonus'))->sortable(),
+                TextColumn::make('weight_grams')->label(__('admin.common.fields.weight'))->suffix(' g')->sortable(),
+                TextColumn::make('line_total_weight_grams')->label(__('admin.common.fields.line_total_weight'))->suffix(' g')->sortable(),
             ])
             ->headerActions([
                 $this->makeCreateAction(),
@@ -197,7 +211,7 @@ class ItemsRelationManager extends RelationManager
             'weight_grams' => $weightGrams,
             'product_name' => filled($data['product_name'] ?? null)
                 ? $data['product_name']
-                : ($product?->translations->first()?->name ?? "Product #{$data['product_id']}"),
+                : ($product?->translations->first()?->name ?? sprintf('%s #%d', __('admin.resources.product.model_label'), $data['product_id'])),
             'product_image' => filled($data['product_image'] ?? null)
                 ? $data['product_image']
                 : $this->getProductDefaultImage($product),

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 #[Fillable(['code', 'name', 'is_default', 'is_active', 'sort_order'])]
 class Language extends Model
@@ -26,6 +27,22 @@ class Language extends Model
                 ->where('is_default', true)
                 ->update(['is_default' => false]);
         });
+    }
+
+    public static function resolveAdminLocale(?string $code = null): string
+    {
+        $locale = Str::of((string) ($code ?? static::query()
+            ->where('is_default', true)
+            ->value('code') ?? config('app.locale')))
+            ->replace('-', '_')
+            ->lower()
+            ->toString();
+
+        if (is_file(lang_path("{$locale}/admin.php"))) {
+            return $locale;
+        }
+
+        return (string) config('app.fallback_locale', 'en');
     }
 
     /**

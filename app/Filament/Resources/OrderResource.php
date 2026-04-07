@@ -39,34 +39,53 @@ class OrderResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.resources.order.navigation_label');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.resources.order.model_label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.resources.order.plural_model_label');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Tabs::make('Основная информация заказа')
+                Tabs::make(__('admin.resources.order.tabs.label'))
                     ->tabs([
-                        Tab::make('Основное')
+                        Tab::make(__('admin.resources.order.tabs.main'))
                             ->schema([
                                 Select::make('client_id')
+                                    ->label(__('admin.common.fields.client'))
                                     ->relationship(name: 'client', titleAttribute: 'login')
                                     ->required()
                                     ->searchable()
                                     ->preload()
                                     ->live(),
                                 Select::make('institution_id')
+                                    ->label(__('admin.common.fields.institution'))
                                     ->relationship(name: 'institution', titleAttribute: 'id')
                                     ->required()
                                     ->searchable()
                                     ->preload(),
                                 Select::make('source')
+                                    ->label(__('admin.common.fields.source'))
                                     ->options(OrderSource::class)
                                     ->default(OrderSource::Admin)
                                     ->disabled()
                                     ->dehydrated(),
                                 Placeholder::make('status_preview')
-                                    ->label('Status')
+                                    ->label(__('admin.common.fields.status'))
                                     ->content(fn (?Order $record): string => static::formatStatusPreview($record)),
                                 Select::make('created_by_user_id')
+                                    ->label(__('admin.common.fields.created_by'))
                                     ->relationship(name: 'createdByUser', titleAttribute: 'name')
                                     ->default(fn (): ?int => auth()->id())
                                     ->disabled()
@@ -75,21 +94,18 @@ class OrderResource extends Resource
                                     ->preload(),
                             ])
                             ->columns(2),
-                        Tab::make('Получатель')
+                        Tab::make(__('admin.resources.order.tabs.recipient'))
                             ->schema([
                                 Select::make('recipient_type')
-                                    ->label('Получатель')
-                                    ->options([
-                                        OrderRecipientType::Client->value => 'Сам клиент',
-                                        OrderRecipientType::Other->value => 'Другой получатель',
-                                    ])
+                                    ->label(__('admin.common.fields.recipient_type'))
+                                    ->options(OrderRecipientType::class)
                                     ->default(OrderRecipientType::Client->value)
                                     ->disabled(fn (string $operation): bool => $operation !== 'create')
                                     ->dehydrated(fn (string $operation): bool => $operation === 'create')
                                     ->live()
                                     ->required(),
                                 Placeholder::make('recipient_snapshot_hint')
-                                    ->label('Данные получателя')
+                                    ->label(__('admin.common.fields.recipient_data'))
                                     ->content(fn (Get $get, ?Order $record): string => static::getRecipientPreview($get, $record))
                                     ->hidden(
                                         fn (Get $get, string $operation): bool => $operation !== 'create'
@@ -97,7 +113,7 @@ class OrderResource extends Resource
                                     )
                                     ->columnSpanFull(),
                                 TextInput::make('recipient_first_name')
-                                    ->label('Имя получателя')
+                                    ->label(__('admin.common.fields.recipient_first_name'))
                                     ->requiredIf('recipient_type', OrderRecipientType::Other->value)
                                     ->hidden(
                                         fn (Get $get, string $operation): bool => $operation === 'create'
@@ -110,7 +126,7 @@ class OrderResource extends Resource
                                     )
                                     ->maxLength(255),
                                 TextInput::make('recipient_last_name')
-                                    ->label('Фамилия получателя')
+                                    ->label(__('admin.common.fields.recipient_last_name'))
                                     ->requiredIf('recipient_type', OrderRecipientType::Other->value)
                                     ->hidden(
                                         fn (Get $get, string $operation): bool => $operation === 'create'
@@ -123,7 +139,7 @@ class OrderResource extends Resource
                                     )
                                     ->maxLength(255),
                                 TextInput::make('recipient_bin')
-                                    ->label('ИИН / БИН получателя')
+                                    ->label(__('admin.common.fields.recipient_bin'))
                                     ->requiredIf('recipient_type', OrderRecipientType::Other->value)
                                     ->hidden(
                                         fn (Get $get, string $operation): bool => $operation === 'create'
@@ -137,69 +153,70 @@ class OrderResource extends Resource
                                     ->maxLength(255),
                             ])
                             ->columns(2),
-                        Tab::make('Параметры')
+                        Tab::make(__('admin.resources.order.tabs.parameters'))
                             ->schema([
                                 TextInput::make('total_bonus')
-                                    ->label('Total bonus')
+                                    ->label(__('admin.common.fields.total_bonus'))
                                     ->numeric()
                                     ->default(0)
                                     ->disabled()
                                     ->dehydrated(false),
                                 TextInput::make('total_weight_grams')
-                                    ->label('Total weight')
+                                    ->label(__('admin.common.fields.total_weight'))
                                     ->numeric()
                                     ->default(0)
                                     ->disabled()
                                     ->dehydrated(false)
                                     ->suffix('g'),
                                 TextInput::make('reserved_bonus_amount')
+                                    ->label(__('admin.common.fields.bonus_reserved'))
                                     ->numeric()
                                     ->default(0)
                                     ->disabled()
                                     ->dehydrated(false),
                                 Placeholder::make('items_management_hint')
-                                    ->label('Товары')
-                                    ->content('Позиции заказа добавляются после сохранения заказа в блоке "Items" на странице редактирования.')
+                                    ->label(__('admin.common.fields.products'))
+                                    ->content(__('admin.resources.order.fields.items_hint'))
                                     ->hidden(fn (string $operation): bool => $operation !== 'create')
                                     ->columnSpanFull(),
                             ])
                             ->columns(2),
-                        Tab::make('Статусы и даты')
+                        Tab::make(__('admin.resources.order.tabs.status_dates'))
                             ->schema([
                                 Placeholder::make('placed_at_preview')
-                                    ->label('Placed at')
+                                    ->label(__('admin.common.fields.placed_at'))
                                     ->content(
                                         fn (?Order $record): string => static::formatDateTimePreview(
                                             $record,
                                             'placed_at',
-                                            'Будет установлено автоматически при создании.',
+                                            __('admin.resources.order.messages.placed_at_pending'),
                                         )
                                     ),
                                 Placeholder::make('status_changed_at_preview')
-                                    ->label('Status changed at')
+                                    ->label(__('admin.common.fields.status_changed_at'))
                                     ->content(
                                         fn (?Order $record): string => static::formatDateTimePreview(
                                             $record,
                                             'status_changed_at',
-                                            'Ещё не менялся.',
+                                            __('admin.resources.order.messages.status_not_changed'),
                                         )
                                     ),
                                 Placeholder::make('delivered_at_preview')
-                                    ->label('Delivered at')
+                                    ->label(__('admin.common.fields.delivered_at'))
                                     ->content(
                                         fn (?Order $record): string => static::formatDateTimePreview(
                                             $record,
                                             'delivered_at',
-                                            'Ещё не доставлен.',
+                                            __('admin.resources.order.messages.not_delivered'),
                                         )
                                     ),
                                 Placeholder::make('cancelled_at_preview')
-                                    ->label('Cancelled at')
+                                    ->label(__('admin.common.fields.cancelled_at'))
                                     ->content(
                                         fn (?Order $record): string => static::formatDateTimePreview(
                                             $record,
                                             'cancelled_at',
-                                            'Не отменён.',
+                                            __('admin.resources.order.messages.not_cancelled'),
                                         )
                                     ),
                             ])
@@ -219,14 +236,14 @@ class OrderResource extends Resource
         $clientId = $get('client_id');
 
         if (! filled($clientId)) {
-            return 'Выберите клиента, и данные получателя заполнятся из его карточки.';
+            return __('admin.resources.order.messages.recipient_from_client');
         }
 
         /** @var Client|null $client */
         $client = Client::query()->find($clientId);
 
         if (! $client) {
-            return 'Клиент не найден.';
+            return __('admin.resources.order.messages.client_not_found');
         }
 
         return static::formatRecipientPreview($client->full_name, $client->bin);
@@ -235,7 +252,7 @@ class OrderResource extends Resource
     private static function formatRecipientPreview(string $fullName, ?string $bin): string
     {
         if (! filled($fullName) && ! filled($bin)) {
-            return 'Данные получателя не заполнены.';
+            return __('admin.resources.order.messages.recipient_empty');
         }
 
         if (filled($fullName) && filled($bin)) {
@@ -249,7 +266,7 @@ class OrderResource extends Resource
     {
         $status = $record?->status ?? OrderStatus::New;
 
-        return str($status->value)->headline()->toString();
+        return (string) ($status->getLabel() ?? str($status->value)->headline()->toString());
     }
 
     private static function formatDateTimePreview(?Order $record, string $attribute, string $fallback): string
@@ -267,17 +284,17 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('id')->sortable(),
-                TextColumn::make('client.login')->searchable(),
+                TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
+                TextColumn::make('client.login')->label(__('admin.common.fields.client'))->searchable(),
                 TextColumn::make('recipient_full_name')
-                    ->label('Recipient'),
-                TextColumn::make('institution.translations.name')->label('Institution'),
-                TextColumn::make('source')->badge(),
-                TextColumn::make('status')->badge(),
-                TextColumn::make('total_bonus')->sortable(),
-                TextColumn::make('total_weight_grams')->suffix(' g')->sortable(),
-                TextColumn::make('placed_at')->dateTime()->sortable(),
-                TextColumn::make('created_at')->dateTime()->sortable(),
+                    ->label(__('admin.common.fields.recipient')),
+                TextColumn::make('institution.translations.name')->label(__('admin.common.fields.institution')),
+                TextColumn::make('source')->label(__('admin.common.fields.source'))->badge(),
+                TextColumn::make('status')->label(__('admin.common.fields.status'))->badge(),
+                TextColumn::make('total_bonus')->label(__('admin.common.fields.total_bonus'))->sortable(),
+                TextColumn::make('total_weight_grams')->label(__('admin.common.fields.total_weight'))->suffix(' g')->sortable(),
+                TextColumn::make('placed_at')->label(__('admin.common.fields.placed_at'))->dateTime()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
             ])
             ->defaultSort('id', 'desc')
             ->filters([
@@ -296,10 +313,10 @@ class OrderResource extends Resource
     public static function makeDeleteAction(): DeleteAction
     {
         return DeleteAction::make()
-            ->label('Удалить')
+            ->label(__('admin.common.actions.delete'))
             ->visible(fn (Order $record): bool => $record->canBeDeleted())
-            ->modalDescription('Будут удалены сам заказ, его позиции, история статусов и связанные бонусные транзакции.')
-            ->successNotificationTitle('Заказ удалён.')
+            ->modalDescription(__('admin.resources.order.messages.delete_description'))
+            ->successNotificationTitle(__('admin.resources.order.messages.deleted'))
             ->using(function (Order $record): bool {
                 app(DeleteOrderAction::class)->handle($record);
 

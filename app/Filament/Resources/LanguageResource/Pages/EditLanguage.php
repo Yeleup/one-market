@@ -16,7 +16,7 @@ class EditLanguage extends EditRecord
     {
         return [
             Action::make('setDefaultLanguage')
-                ->label('Сделать языком по умолчанию')
+                ->label(__('admin.resources.language.actions.set_default'))
                 ->icon('heroicon-o-star')
                 ->color('warning')
                 ->visible(fn (): bool => ! $this->getRecord()->is_default)
@@ -29,7 +29,7 @@ class EditLanguage extends EditRecord
 
                     Notification::make()
                         ->success()
-                        ->title('Язык по умолчанию обновлён.')
+                        ->title(__('admin.resources.language.notifications.default_updated'))
                         ->send();
                 }),
             DeleteAction::make(),

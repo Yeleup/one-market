@@ -9,22 +9,28 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class OrdersRelationManager extends RelationManager
 {
     protected static string $relationship = 'orders';
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('admin.relation_managers.orders');
+    }
 
     public function table(Table $table): Table
     {
         return $table
             ->recordTitleAttribute('id')
             ->columns([
-                TextColumn::make('id')->sortable(),
-                TextColumn::make('status')->badge(),
-                TextColumn::make('institution.id')->label('Institution'),
-                TextColumn::make('total_bonus')->sortable(),
-                TextColumn::make('total_weight_grams')->suffix(' g')->sortable(),
-                TextColumn::make('placed_at')->dateTime()->sortable(),
+                TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
+                TextColumn::make('status')->label(__('admin.common.fields.status'))->badge(),
+                TextColumn::make('institution.id')->label(__('admin.common.fields.institution')),
+                TextColumn::make('total_bonus')->label(__('admin.common.fields.total_bonus'))->sortable(),
+                TextColumn::make('total_weight_grams')->label(__('admin.common.fields.total_weight'))->suffix(' g')->sortable(),
+                TextColumn::make('placed_at')->label(__('admin.common.fields.placed_at'))->dateTime()->sortable(),
             ])
             ->filters([
                 SelectFilter::make('status')
