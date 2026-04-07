@@ -16,11 +16,12 @@ use BackedEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -42,122 +43,171 @@ class OrderResource extends Resource
     {
         return $schema
             ->components([
-                Select::make('client_id')
-                    ->relationship(name: 'client', titleAttribute: 'login')
-                    ->required()
-                    ->searchable()
-                    ->preload()
-                    ->live(),
-                Select::make('institution_id')
-                    ->relationship(name: 'institution', titleAttribute: 'id')
-                    ->required()
-                    ->searchable()
-                    ->preload(),
-                Select::make('recipient_type')
-                    ->label('Получатель')
-                    ->options([
-                        OrderRecipientType::Client->value => 'Сам клиент',
-                        OrderRecipientType::Other->value => 'Другой получатель',
+                Tabs::make('Основная информация заказа')
+                    ->tabs([
+                        Tab::make('Основное')
+                            ->schema([
+                                Select::make('client_id')
+                                    ->relationship(name: 'client', titleAttribute: 'login')
+                                    ->required()
+                                    ->searchable()
+                                    ->preload()
+                                    ->live(),
+                                Select::make('institution_id')
+                                    ->relationship(name: 'institution', titleAttribute: 'id')
+                                    ->required()
+                                    ->searchable()
+                                    ->preload(),
+                                Select::make('source')
+                                    ->options(OrderSource::class)
+                                    ->default(OrderSource::Admin)
+                                    ->disabled()
+                                    ->dehydrated(),
+                                Placeholder::make('status_preview')
+                                    ->label('Status')
+                                    ->content(fn (?Order $record): string => static::formatStatusPreview($record)),
+                                Select::make('created_by_user_id')
+                                    ->relationship(name: 'createdByUser', titleAttribute: 'name')
+                                    ->default(fn (): ?int => auth()->id())
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->searchable()
+                                    ->preload(),
+                            ])
+                            ->columns(2),
+                        Tab::make('Получатель')
+                            ->schema([
+                                Select::make('recipient_type')
+                                    ->label('Получатель')
+                                    ->options([
+                                        OrderRecipientType::Client->value => 'Сам клиент',
+                                        OrderRecipientType::Other->value => 'Другой получатель',
+                                    ])
+                                    ->default(OrderRecipientType::Client->value)
+                                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                                    ->dehydrated(fn (string $operation): bool => $operation === 'create')
+                                    ->live()
+                                    ->required(),
+                                Placeholder::make('recipient_snapshot_hint')
+                                    ->label('Данные получателя')
+                                    ->content(fn (Get $get, ?Order $record): string => static::getRecipientPreview($get, $record))
+                                    ->hidden(
+                                        fn (Get $get, string $operation): bool => $operation !== 'create'
+                                            || $get('recipient_type') !== OrderRecipientType::Client->value
+                                    )
+                                    ->columnSpanFull(),
+                                TextInput::make('recipient_first_name')
+                                    ->label('Имя получателя')
+                                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
+                                    ->hidden(
+                                        fn (Get $get, string $operation): bool => $operation === 'create'
+                                            && $get('recipient_type') !== OrderRecipientType::Other->value
+                                    )
+                                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                                    ->dehydrated(
+                                        fn (Get $get, string $operation): bool => $operation === 'create'
+                                            && $get('recipient_type') === OrderRecipientType::Other->value
+                                    )
+                                    ->maxLength(255),
+                                TextInput::make('recipient_last_name')
+                                    ->label('Фамилия получателя')
+                                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
+                                    ->hidden(
+                                        fn (Get $get, string $operation): bool => $operation === 'create'
+                                            && $get('recipient_type') !== OrderRecipientType::Other->value
+                                    )
+                                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                                    ->dehydrated(
+                                        fn (Get $get, string $operation): bool => $operation === 'create'
+                                            && $get('recipient_type') === OrderRecipientType::Other->value
+                                    )
+                                    ->maxLength(255),
+                                TextInput::make('recipient_bin')
+                                    ->label('ИИН / БИН получателя')
+                                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
+                                    ->hidden(
+                                        fn (Get $get, string $operation): bool => $operation === 'create'
+                                            && $get('recipient_type') !== OrderRecipientType::Other->value
+                                    )
+                                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                                    ->dehydrated(
+                                        fn (Get $get, string $operation): bool => $operation === 'create'
+                                            && $get('recipient_type') === OrderRecipientType::Other->value
+                                    )
+                                    ->maxLength(255),
+                            ])
+                            ->columns(2),
+                        Tab::make('Параметры')
+                            ->schema([
+                                TextInput::make('total_bonus')
+                                    ->label('Total bonus')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                TextInput::make('total_weight_grams')
+                                    ->label('Total weight')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->suffix('g'),
+                                TextInput::make('reserved_bonus_amount')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                Placeholder::make('items_management_hint')
+                                    ->label('Товары')
+                                    ->content('Позиции заказа добавляются после сохранения заказа в блоке "Items" на странице редактирования.')
+                                    ->hidden(fn (string $operation): bool => $operation !== 'create')
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(2),
+                        Tab::make('Статусы и даты')
+                            ->schema([
+                                Placeholder::make('placed_at_preview')
+                                    ->label('Placed at')
+                                    ->content(
+                                        fn (?Order $record): string => static::formatDateTimePreview(
+                                            $record,
+                                            'placed_at',
+                                            'Будет установлено автоматически при создании.',
+                                        )
+                                    ),
+                                Placeholder::make('status_changed_at_preview')
+                                    ->label('Status changed at')
+                                    ->content(
+                                        fn (?Order $record): string => static::formatDateTimePreview(
+                                            $record,
+                                            'status_changed_at',
+                                            'Ещё не менялся.',
+                                        )
+                                    ),
+                                Placeholder::make('delivered_at_preview')
+                                    ->label('Delivered at')
+                                    ->content(
+                                        fn (?Order $record): string => static::formatDateTimePreview(
+                                            $record,
+                                            'delivered_at',
+                                            'Ещё не доставлен.',
+                                        )
+                                    ),
+                                Placeholder::make('cancelled_at_preview')
+                                    ->label('Cancelled at')
+                                    ->content(
+                                        fn (?Order $record): string => static::formatDateTimePreview(
+                                            $record,
+                                            'cancelled_at',
+                                            'Не отменён.',
+                                        )
+                                    ),
+                            ])
+                            ->columns(2),
                     ])
-                    ->default(OrderRecipientType::Client->value)
-                    ->disabled(fn (string $operation): bool => $operation !== 'create')
-                    ->dehydrated(fn (string $operation): bool => $operation === 'create')
-                    ->live()
-                    ->required(),
-                Select::make('source')
-                    ->options(OrderSource::class)
-                    ->default(OrderSource::Admin)
-                    ->disabled()
-                    ->dehydrated(),
-                Select::make('status')
-                    ->options(OrderStatus::class)
-                    ->default(OrderStatus::New)
-                    ->disabled(fn (string $operation): bool => $operation !== 'create')
-                    ->dehydrated(fn (string $operation): bool => $operation === 'create')
-                    ->required(),
-                Placeholder::make('recipient_snapshot_hint')
-                    ->label('Данные получателя')
-                    ->content(fn (Get $get, ?Order $record): string => static::getRecipientPreview($get, $record))
-                    ->hidden(
-                        fn (Get $get, string $operation): bool => $operation !== 'create'
-                            || $get('recipient_type') !== OrderRecipientType::Client->value
-                    )
                     ->columnSpanFull(),
-                TextInput::make('recipient_first_name')
-                    ->label('Имя получателя')
-                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
-                    ->hidden(
-                        fn (Get $get, string $operation): bool => $operation === 'create'
-                            && $get('recipient_type') !== OrderRecipientType::Other->value
-                    )
-                    ->disabled(fn (string $operation): bool => $operation !== 'create')
-                    ->dehydrated(
-                        fn (Get $get, string $operation): bool => $operation === 'create'
-                            && $get('recipient_type') === OrderRecipientType::Other->value
-                    )
-                    ->maxLength(255),
-                TextInput::make('recipient_last_name')
-                    ->label('Фамилия получателя')
-                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
-                    ->hidden(
-                        fn (Get $get, string $operation): bool => $operation === 'create'
-                            && $get('recipient_type') !== OrderRecipientType::Other->value
-                    )
-                    ->disabled(fn (string $operation): bool => $operation !== 'create')
-                    ->dehydrated(
-                        fn (Get $get, string $operation): bool => $operation === 'create'
-                            && $get('recipient_type') === OrderRecipientType::Other->value
-                    )
-                    ->maxLength(255),
-                TextInput::make('recipient_bin')
-                    ->label('ИИН / БИН получателя')
-                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
-                    ->hidden(
-                        fn (Get $get, string $operation): bool => $operation === 'create'
-                            && $get('recipient_type') !== OrderRecipientType::Other->value
-                    )
-                    ->disabled(fn (string $operation): bool => $operation !== 'create')
-                    ->dehydrated(
-                        fn (Get $get, string $operation): bool => $operation === 'create'
-                            && $get('recipient_type') === OrderRecipientType::Other->value
-                    )
-                    ->maxLength(255),
-                Placeholder::make('items_management_hint')
-                    ->label('Товары')
-                    ->content('Позиции заказа добавляются после сохранения заказа в блоке "Items" на странице редактирования.')
-                    ->hidden(fn (string $operation): bool => $operation !== 'create')
-                    ->columnSpanFull(),
-                TextInput::make('total_bonus')
-                    ->label('Total bonus')
-                    ->numeric()
-                    ->default(0)
-                    ->disabled()
-                    ->dehydrated(false),
-                TextInput::make('total_weight_grams')
-                    ->label('Total weight')
-                    ->numeric()
-                    ->default(0)
-                    ->disabled()
-                    ->dehydrated(false)
-                    ->suffix('g'),
-                TextInput::make('reserved_bonus_amount')
-                    ->numeric()
-                    ->default(0)
-                    ->disabled()
-                    ->dehydrated(false),
-                DateTimePicker::make('placed_at')
-                    ->default(now()),
-                DateTimePicker::make('status_changed_at'),
-                DateTimePicker::make('delivered_at'),
-                DateTimePicker::make('cancelled_at'),
-                Select::make('created_by_user_id')
-                    ->relationship(name: 'createdByUser', titleAttribute: 'name')
-                    ->default(fn (): ?int => auth()->id())
-                    ->disabled()
-                    ->dehydrated(false)
-                    ->searchable()
-                    ->preload(),
-            ]);
+            ])
+            ->columns(2);
     }
 
     private static function getRecipientPreview(Get $get, ?Order $record): string
@@ -193,6 +243,24 @@ class OrderResource extends Resource
         }
 
         return filled($fullName) ? $fullName : (string) $bin;
+    }
+
+    private static function formatStatusPreview(?Order $record): string
+    {
+        $status = $record?->status ?? OrderStatus::New;
+
+        return str($status->value)->headline()->toString();
+    }
+
+    private static function formatDateTimePreview(?Order $record, string $attribute, string $fallback): string
+    {
+        $dateTime = $record?->{$attribute};
+
+        if ($dateTime === null) {
+            return $fallback;
+        }
+
+        return $dateTime->toDateTimeString();
     }
 
     public static function table(Table $table): Table
