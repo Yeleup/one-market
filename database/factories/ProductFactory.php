@@ -18,6 +18,7 @@ class ProductFactory extends Factory
     {
         return [
             'category_id' => Category::factory(),
+            'slug' => fake()->unique()->slug(),
             'bonus_price' => fake()->numberBetween(100, 5000),
             'weight_grams' => fake()->numberBetween(50, 2000),
             'stock_quantity' => fake()->numberBetween(0, 100),

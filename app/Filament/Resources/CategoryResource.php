@@ -36,7 +36,7 @@ class CategoryResource extends Resource
      */
     public static function getTranslatableAttributes(): array
     {
-        return ['name', 'slug'];
+        return ['name'];
     }
 
     public static function getTranslationRelationshipName(): string
@@ -48,16 +48,17 @@ class CategoryResource extends Resource
     {
         return $schema
             ->components([
+                TextInput::make('slug')
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->maxLength(255)
+                    ->helperText('Общий slug для всех языков.'),
                 Toggle::make('is_active')
                     ->default(true),
                 static::makeTranslationTabs(
                     fn (Language $language, string $statePath): array => [
                         TextInput::make("{$statePath}.name")
                             ->label('Name')
-                            ->required()
-                            ->maxLength(255),
-                        TextInput::make("{$statePath}.slug")
-                            ->label('Slug')
                             ->required()
                             ->maxLength(255),
                     ],
@@ -71,6 +72,7 @@ class CategoryResource extends Resource
             ->columns([
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('translations.name')->label('Name')->searchable(),
+                TextColumn::make('slug')->searchable(),
                 IconColumn::make('is_active')->boolean(),
                 TextColumn::make('products_count')->counts('products')->label('Products'),
                 TextColumn::make('created_at')->dateTime()->sortable(),

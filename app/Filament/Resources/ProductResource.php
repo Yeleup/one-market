@@ -12,11 +12,13 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
@@ -42,7 +44,7 @@ class ProductResource extends Resource
      */
     public static function getTranslatableAttributes(): array
     {
-        return ['name', 'description', 'slug'];
+        return ['name', 'description'];
     }
 
     public static function getTranslationRelationshipName(): string
@@ -54,52 +56,71 @@ class ProductResource extends Resource
     {
         return $schema
             ->components([
-                Select::make('category_id')
-                    ->relationship(name: 'category', titleAttribute: 'id')
-                    ->required()
-                    ->searchable()
-                    ->preload(),
-                TextInput::make('bonus_price')
-                    ->numeric()
-                    ->required(),
-                TextInput::make('weight_grams')
-                    ->numeric()
-                    ->required()
-                    ->suffix('g'),
-                TextInput::make('stock_quantity')
-                    ->numeric()
-                    ->default(0),
-                FileUpload::make('image')
-                    ->image()
-                    ->directory('products'),
-                Toggle::make('is_active')
-                    ->default(true),
-                static::makeTranslationTabs(
-                    fn (Language $language, string $statePath): array => [
-                        TextInput::make("{$statePath}.name")
-                            ->label('Name')
-                            ->required()
-                            ->maxLength(255),
-                        Textarea::make("{$statePath}.description")
-                            ->label('Description'),
-                        TextInput::make("{$statePath}.slug")
-                            ->label('Slug')
-                            ->maxLength(255),
-                    ],
-                ),
-                Repeater::make('images')
-                    ->relationship()
-                    ->schema([
-                        FileUpload::make('image')
-                            ->image()
-                            ->directory('products/gallery')
-                            ->required(),
-                        TextInput::make('sort_order')
-                            ->numeric()
-                            ->default(0),
+                Tabs::make('Product')
+                    ->tabs([
+                        Tab::make('Основное')
+                            ->schema([
+                                Select::make('category_id')
+                                    ->relationship(name: 'category', titleAttribute: 'id')
+                                    ->required()
+                                    ->searchable()
+                                    ->preload(),
+                                TextInput::make('bonus_price')
+                                    ->numeric()
+                                    ->required(),
+                                TextInput::make('weight_grams')
+                                    ->numeric()
+                                    ->required()
+                                    ->suffix('g'),
+                                TextInput::make('stock_quantity')
+                                    ->numeric()
+                                    ->default(0),
+                                TextInput::make('slug')
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(255)
+                                    ->helperText('Общий slug для всех языков.')
+                                    ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? trim($state) : null),
+                                FileUpload::make('image')
+                                    ->image()
+                                    ->directory('products'),
+                                Toggle::make('is_active')
+                                    ->default(true),
+                            ])
+                            ->columns(2),
+                        Tab::make('Переводы')
+                            ->schema([
+                                static::makeTranslationTabs(
+                                    fn (Language $language, string $statePath): array => [
+                                        TextInput::make("{$statePath}.name")
+                                            ->label('Name')
+                                            ->required()
+                                            ->maxLength(255),
+                                        RichEditor::make("{$statePath}.description")
+                                            ->label('Description'),
+                                    ],
+                                ),
+                            ]),
+                        Tab::make('Галерея')
+                            ->schema([
+                                Repeater::make('images')
+                                    ->relationship()
+                                    ->defaultItems(0)
+                                    ->schema([
+                                        FileUpload::make('image')
+                                            ->image()
+                                            ->directory('products/gallery')
+                                            ->required(),
+                                        TextInput::make('sort_order')
+                                            ->numeric()
+                                            ->default(0),
+                                    ])
+                                    ->columnSpanFull(),
+                            ]),
                     ])
                     ->columnSpanFull(),
-            ]);
+            ])
+            ->columns(2);
     }
 
     public static function table(Table $table): Table
@@ -109,6 +130,7 @@ class ProductResource extends Resource
                 TextColumn::make('id')->sortable(),
                 ImageColumn::make('image'),
                 TextColumn::make('translations.name')->label('Name')->searchable(),
+                TextColumn::make('slug')->searchable(),
                 TextColumn::make('category.translations.name')->label('Category'),
                 TextColumn::make('bonus_price')->sortable(),
                 TextColumn::make('weight_grams')->suffix(' g')->sortable(),

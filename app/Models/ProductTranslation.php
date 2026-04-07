@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['product_id', 'language_id', 'name', 'description', 'slug'])]
+#[Fillable(['product_id', 'language_id', 'name', 'description'])]
 class ProductTranslation extends Model
 {
     /** @return BelongsTo<Product, $this> */

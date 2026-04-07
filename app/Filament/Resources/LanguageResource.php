@@ -39,7 +39,8 @@ class LanguageResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Toggle::make('is_default')
-                    ->default(false),
+                    ->default(false)
+                    ->helperText('Если включить, у остальных языков default будет снят автоматически.'),
                 Toggle::make('is_active')
                     ->default(true),
                 TextInput::make('sort_order')

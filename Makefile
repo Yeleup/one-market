@@ -10,8 +10,9 @@ PROD_COMPOSE := $(COMPOSE_BASE) -f docker-compose.yml
 
 cmd ?= about
 service ?= app
+test_args ?= --compact
 
-.PHONY: help key-show up start rebuild down logs ps artisan composer shell migrate queue-restart npm-install \
+.PHONY: help key-show up start rebuild down logs ps artisan composer shell migrate test queue-restart npm-install \
 	prod-up prod-start prod-down prod-logs prod-ps prod-artisan prod-shell \
 	prod-migrate prod-queue-restart prod-deploy
 
@@ -28,6 +29,7 @@ help:
 		'make composer cmd="..."  # local: run composer command in app' \
 		'make shell               # local: open shell in app container' \
 		'make migrate             # local: run migrations' \
+		'make test                # local: run tests in app container' \
 		'make npm-install         # local: install npm deps in vite container' \
 		'make prod-up             # production: build and start' \
 		'make prod-start          # production: start without rebuild' \
@@ -71,6 +73,9 @@ shell:
 
 migrate:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan migrate --force
+
+test:
+	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan test $(test_args)
 
 queue-restart:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan queue:restart

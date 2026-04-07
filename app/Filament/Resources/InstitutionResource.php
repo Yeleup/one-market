@@ -10,7 +10,7 @@ use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
@@ -65,7 +65,7 @@ class InstitutionResource extends Resource
                             ->label('Address')
                             ->required()
                             ->maxLength(255),
-                        Textarea::make("{$statePath}.description")
+                        RichEditor::make("{$statePath}.description")
                             ->label('Description'),
                     ],
                 ),

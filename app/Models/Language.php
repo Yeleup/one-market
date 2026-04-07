@@ -14,6 +14,20 @@ class Language extends Model
     /** @use HasFactory<LanguageFactory> */
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::saved(function (Language $language): void {
+            if (! $language->is_default) {
+                return;
+            }
+
+            static::query()
+                ->whereKeyNot($language->getKey())
+                ->where('is_default', true)
+                ->update(['is_default' => false]);
+        });
+    }
+
     /**
      * @return array<string, string>
      */

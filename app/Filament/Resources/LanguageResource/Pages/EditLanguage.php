@@ -3,12 +3,10 @@
 namespace App\Filament\Resources\LanguageResource\Pages;
 
 use App\Filament\Resources\LanguageResource;
-use App\Models\Language;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\DB;
 
 class EditLanguage extends EditRecord
 {
@@ -24,11 +22,7 @@ class EditLanguage extends EditRecord
                 ->visible(fn (): bool => ! $this->getRecord()->is_default)
                 ->requiresConfirmation()
                 ->action(function (): void {
-                    DB::transaction(function (): void {
-                        Language::query()->update(['is_default' => false]);
-
-                        $this->getRecord()->update(['is_default' => true]);
-                    });
+                    $this->getRecord()->update(['is_default' => true]);
 
                     $this->record = $this->getRecord()->fresh();
                     $this->fillForm();
