@@ -3,9 +3,9 @@
 namespace App\Actions\Orders;
 
 use App\Enums\BonusTransactionType;
-use App\Enums\OrderRecipientType;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
+use App\Enums\RecipientType;
 use App\Models\Client;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +17,7 @@ class CreateOrderAction
      * @param  array{
      *     client_id: int|string,
      *     institution_id: int|string,
-     *     recipient_type?: OrderRecipientType|null,
+     *     recipient_type?: RecipientType|null,
      *     recipient_first_name?: string|null,
      *     recipient_last_name?: string|null,
      *     recipient_bin?: string|null,
@@ -52,7 +52,7 @@ class CreateOrderAction
      * @param  array{
      *     client_id: int|string,
      *     institution_id: int|string,
-     *     recipient_type?: OrderRecipientType|null,
+     *     recipient_type?: RecipientType|null,
      *     recipient_first_name?: string|null,
      *     recipient_last_name?: string|null,
      *     recipient_bin?: string|null,
@@ -86,13 +86,13 @@ class CreateOrderAction
 
     /**
      * @param  array{
-     *     recipient_type?: OrderRecipientType|null,
+     *     recipient_type?: RecipientType|null,
      *     recipient_first_name?: string|null,
      *     recipient_last_name?: string|null,
      *     recipient_bin?: string|null
      * }  $attributes
      * @return array{
-     *     recipient_type: OrderRecipientType,
+     *     recipient_type: RecipientType,
      *     recipient_first_name: string,
      *     recipient_last_name: string,
      *     recipient_bin: string
@@ -100,8 +100,8 @@ class CreateOrderAction
      */
     private function resolveRecipientPayload(array $attributes, Client $client): array
     {
-        $rawRecipientType = $attributes['recipient_type'] ?? OrderRecipientType::Client;
-        $recipientType = $rawRecipientType instanceof OrderRecipientType
+        $rawRecipientType = $attributes['recipient_type'] ?? $client->recipient_type ?? RecipientType::Client;
+        $recipientType = $rawRecipientType instanceof RecipientType
             ? $rawRecipientType
             : null;
 
@@ -111,7 +111,7 @@ class CreateOrderAction
             ]);
         }
 
-        if ($recipientType === OrderRecipientType::Client) {
+        if ($recipientType === RecipientType::Client) {
             return [
                 'recipient_type' => $recipientType,
                 'recipient_first_name' => $client->first_name,
@@ -122,19 +122,22 @@ class CreateOrderAction
 
         return [
             'recipient_type' => $recipientType,
-            'recipient_first_name' => $this->requireRecipientValue(
+            'recipient_first_name' => $this->resolveRecipientValue(
                 $attributes,
                 'recipient_first_name',
+                $client->recipient_first_name,
                 'Имя получателя обязательно.',
             ),
-            'recipient_last_name' => $this->requireRecipientValue(
+            'recipient_last_name' => $this->resolveRecipientValue(
                 $attributes,
                 'recipient_last_name',
+                $client->recipient_last_name,
                 'Фамилия получателя обязательна.',
             ),
-            'recipient_bin' => $this->requireRecipientValue(
+            'recipient_bin' => $this->resolveRecipientValue(
                 $attributes,
                 'recipient_bin',
+                $client->recipient_bin,
                 'ИИН/БИН получателя обязателен.',
             ),
         ];
@@ -143,9 +146,9 @@ class CreateOrderAction
     /**
      * @param  array<string, mixed>  $attributes
      */
-    private function requireRecipientValue(array $attributes, string $key, string $message): string
+    private function resolveRecipientValue(array $attributes, string $key, ?string $fallback, string $message): string
     {
-        $value = trim((string) ($attributes[$key] ?? ''));
+        $value = trim((string) ($attributes[$key] ?? $fallback ?? ''));
 
         if (! filled($value)) {
             throw ValidationException::withMessages([

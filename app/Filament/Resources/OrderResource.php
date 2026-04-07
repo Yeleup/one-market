@@ -3,9 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Actions\Orders\DeleteOrderAction;
-use App\Enums\OrderRecipientType;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
+use App\Enums\RecipientType;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers\BonusTransactionsRelationManager;
 use App\Filament\Resources\OrderResource\RelationManagers\ItemsRelationManager;
@@ -23,6 +23,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -54,9 +55,9 @@ class OrderResource extends Resource
         return __('admin.resources.order.plural_model_label');
     }
 
-    private static function recipientTypeMatches(mixed $state, OrderRecipientType $recipientType): bool
+    private static function recipientTypeMatches(mixed $state, RecipientType $recipientType): bool
     {
-        return $state instanceof OrderRecipientType
+        return $state instanceof RecipientType
             ? $state === $recipientType
             : $state === $recipientType->value;
     }
@@ -75,7 +76,27 @@ class OrderResource extends Resource
                                     ->required()
                                     ->searchable()
                                     ->preload()
-                                    ->live(),
+                                    ->live()
+                                    ->afterStateUpdated(function (Set $set, mixed $state): void {
+                                        /** @var Client|null $client */
+                                        $client = filled($state) ? Client::query()->find($state) : null;
+
+                                        if (! $client) {
+                                            $set('recipient_type', RecipientType::Client->value);
+                                            $set('recipient_first_name', null);
+                                            $set('recipient_last_name', null);
+                                            $set('recipient_bin', null);
+
+                                            return;
+                                        }
+
+                                        $recipientType = $client->recipient_type ?? RecipientType::Client;
+
+                                        $set('recipient_type', $recipientType->value);
+                                        $set('recipient_first_name', $recipientType === RecipientType::Other ? $client->recipient_first_name : null);
+                                        $set('recipient_last_name', $recipientType === RecipientType::Other ? $client->recipient_last_name : null);
+                                        $set('recipient_bin', $recipientType === RecipientType::Other ? $client->recipient_bin : null);
+                                    }),
                                 Select::make('institution_id')
                                     ->label(__('admin.common.fields.institution'))
                                     ->relationship(name: 'institution', titleAttribute: 'id')
@@ -105,8 +126,8 @@ class OrderResource extends Resource
                             ->schema([
                                 Select::make('recipient_type')
                                     ->label(__('admin.common.fields.recipient_type'))
-                                    ->options(OrderRecipientType::class)
-                                    ->default(OrderRecipientType::Client->value)
+                                    ->options(RecipientType::class)
+                                    ->default(RecipientType::Client->value)
                                     ->disabled(fn (string $operation): bool => $operation !== 'create')
                                     ->dehydrated(fn (string $operation): bool => $operation === 'create')
                                     ->live()
@@ -116,46 +137,46 @@ class OrderResource extends Resource
                                     ->content(fn (Get $get, ?Order $record): string => static::getRecipientPreview($get, $record))
                                     ->hidden(
                                         fn (Get $get, string $operation): bool => $operation !== 'create'
-                                            || ! static::recipientTypeMatches($get('recipient_type'), OrderRecipientType::Client)
+                                            || ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Client)
                                     )
                                     ->columnSpanFull(),
                                 TextInput::make('recipient_first_name')
                                     ->label(__('admin.common.fields.recipient_first_name'))
-                                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
+                                    ->requiredIf('recipient_type', RecipientType::Other->value)
                                     ->hidden(
                                         fn (Get $get, string $operation): bool => $operation === 'create'
-                                            && ! static::recipientTypeMatches($get('recipient_type'), OrderRecipientType::Other)
+                                            && ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other)
                                     )
                                     ->disabled(fn (string $operation): bool => $operation !== 'create')
                                     ->dehydrated(
                                         fn (Get $get, string $operation): bool => $operation === 'create'
-                                            && static::recipientTypeMatches($get('recipient_type'), OrderRecipientType::Other)
+                                            && static::recipientTypeMatches($get('recipient_type'), RecipientType::Other)
                                     )
                                     ->maxLength(255),
                                 TextInput::make('recipient_last_name')
                                     ->label(__('admin.common.fields.recipient_last_name'))
-                                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
+                                    ->requiredIf('recipient_type', RecipientType::Other->value)
                                     ->hidden(
                                         fn (Get $get, string $operation): bool => $operation === 'create'
-                                            && ! static::recipientTypeMatches($get('recipient_type'), OrderRecipientType::Other)
+                                            && ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other)
                                     )
                                     ->disabled(fn (string $operation): bool => $operation !== 'create')
                                     ->dehydrated(
                                         fn (Get $get, string $operation): bool => $operation === 'create'
-                                            && static::recipientTypeMatches($get('recipient_type'), OrderRecipientType::Other)
+                                            && static::recipientTypeMatches($get('recipient_type'), RecipientType::Other)
                                     )
                                     ->maxLength(255),
                                 TextInput::make('recipient_bin')
                                     ->label(__('admin.common.fields.recipient_bin'))
-                                    ->requiredIf('recipient_type', OrderRecipientType::Other->value)
+                                    ->requiredIf('recipient_type', RecipientType::Other->value)
                                     ->hidden(
                                         fn (Get $get, string $operation): bool => $operation === 'create'
-                                            && ! static::recipientTypeMatches($get('recipient_type'), OrderRecipientType::Other)
+                                            && ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other)
                                     )
                                     ->disabled(fn (string $operation): bool => $operation !== 'create')
                                     ->dehydrated(
                                         fn (Get $get, string $operation): bool => $operation === 'create'
-                                            && static::recipientTypeMatches($get('recipient_type'), OrderRecipientType::Other)
+                                            && static::recipientTypeMatches($get('recipient_type'), RecipientType::Other)
                                     )
                                     ->maxLength(255),
                             ])
@@ -253,7 +274,7 @@ class OrderResource extends Resource
             return __('admin.resources.order.messages.client_not_found');
         }
 
-        return static::formatRecipientPreview($client->full_name, $client->bin);
+        return static::formatRecipientPreview($client->recipient_full_name, $client->recipient_bin_value);
     }
 
     private static function formatRecipientPreview(string $fullName, ?string $bin): string

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\RecipientType;
 use App\Filament\Resources\ClientResource\Pages;
 use App\Filament\Resources\ClientResource\RelationManagers\BonusTransactionsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\OrdersRelationManager;
@@ -12,13 +13,16 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Validation\ValidationException;
 use UnitEnum;
 
 class ClientResource extends Resource
@@ -46,6 +50,63 @@ class ClientResource extends Resource
         return __('admin.resources.client.plural_model_label');
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function normalizeRecipientData(array $data): array
+    {
+        $rawRecipientType = $data['recipient_type'] ?? RecipientType::Client;
+        $recipientType = $rawRecipientType instanceof RecipientType
+            ? $rawRecipientType
+            : RecipientType::tryFrom((string) $rawRecipientType);
+
+        if (! $recipientType) {
+            throw ValidationException::withMessages([
+                'data.recipient_type' => 'Некорректный тип получателя.',
+            ]);
+        }
+
+        $data['recipient_type'] = $recipientType;
+
+        if ($recipientType === RecipientType::Client) {
+            $data['recipient_first_name'] = null;
+            $data['recipient_last_name'] = null;
+            $data['recipient_bin'] = null;
+
+            return $data;
+        }
+
+        $data['recipient_first_name'] = static::normalizeRecipientValue($data, 'recipient_first_name', 'Имя получателя обязательно.');
+        $data['recipient_last_name'] = static::normalizeRecipientValue($data, 'recipient_last_name', 'Фамилия получателя обязательна.');
+        $data['recipient_bin'] = static::normalizeRecipientValue($data, 'recipient_bin', 'ИИН/БИН получателя обязателен.');
+
+        return $data;
+    }
+
+    private static function recipientTypeMatches(mixed $state, RecipientType $recipientType): bool
+    {
+        return $state instanceof RecipientType
+            ? $state === $recipientType
+            : $state === $recipientType->value;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private static function normalizeRecipientValue(array $data, string $key, string $message): string
+    {
+        $value = trim((string) ($data[$key] ?? ''));
+
+        if (! filled($value)) {
+            throw ValidationException::withMessages([
+                "data.{$key}" => $message,
+            ]);
+        }
+
+        return $value;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -67,6 +128,27 @@ class ClientResource extends Resource
                     ->label(__('admin.common.fields.login'))
                     ->required()
                     ->unique(ignoreRecord: true)
+                    ->maxLength(255),
+                Select::make('recipient_type')
+                    ->label(__('admin.common.fields.recipient_type'))
+                    ->options(RecipientType::class)
+                    ->default(RecipientType::Client->value)
+                    ->live()
+                    ->required(),
+                TextInput::make('recipient_first_name')
+                    ->label(__('admin.common.fields.recipient_first_name'))
+                    ->requiredIf('recipient_type', RecipientType::Other->value)
+                    ->hidden(fn (Get $get): bool => ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other))
+                    ->maxLength(255),
+                TextInput::make('recipient_last_name')
+                    ->label(__('admin.common.fields.recipient_last_name'))
+                    ->requiredIf('recipient_type', RecipientType::Other->value)
+                    ->hidden(fn (Get $get): bool => ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other))
+                    ->maxLength(255),
+                TextInput::make('recipient_bin')
+                    ->label(__('admin.common.fields.recipient_bin'))
+                    ->requiredIf('recipient_type', RecipientType::Other->value)
+                    ->hidden(fn (Get $get): bool => ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other))
                     ->maxLength(255),
                 TextInput::make('password')
                     ->label(__('admin.common.fields.password'))
@@ -103,6 +185,8 @@ class ClientResource extends Resource
                     ->searchable(['first_name', 'last_name']),
                 TextColumn::make('bin')->label(__('admin.common.fields.bin'))->searchable(),
                 TextColumn::make('login')->label(__('admin.common.fields.login'))->searchable(),
+                TextColumn::make('recipient_type')->label(__('admin.common.fields.recipient_type'))->badge(),
+                TextColumn::make('recipient_full_name')->label(__('admin.common.fields.recipient')),
                 TextColumn::make('bonus_balance')->label(__('admin.common.fields.bonus_balance'))->sortable(),
                 TextColumn::make('bonus_reserved')->label(__('admin.common.fields.bonus_reserved'))->sortable(),
                 TextColumn::make('available_bonus')

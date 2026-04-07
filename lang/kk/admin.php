@@ -210,7 +210,7 @@ return [
             'reserve_return' => 'Резервті қайтару',
             'write_off' => 'Шегеру',
         ],
-        'order_recipient_type' => [
+        'recipient_type' => [
             'client' => 'Клиенттің өзі',
             'other' => 'Басқа алушы',
         ],

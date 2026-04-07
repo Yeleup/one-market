@@ -210,7 +210,7 @@ return [
             'reserve_return' => 'Reserve return',
             'write_off' => 'Write off',
         ],
-        'order_recipient_type' => [
+        'recipient_type' => [
             'client' => 'Client',
             'other' => 'Other recipient',
         ],

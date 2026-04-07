@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\RecipientType;
 use App\Models\Client;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -24,6 +25,10 @@ class ClientFactory extends Factory
             'bin' => fake()->unique()->numerify('############'),
             'login' => fake()->unique()->userName(),
             'password' => static::$password ??= Hash::make('password'),
+            'recipient_type' => RecipientType::Client,
+            'recipient_first_name' => null,
+            'recipient_last_name' => null,
+            'recipient_bin' => null,
             'bonus_balance' => fake()->numberBetween(0, 10000),
             'bonus_reserved' => 0,
             'is_active' => true,

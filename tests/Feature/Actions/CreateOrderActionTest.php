@@ -2,9 +2,9 @@
 
 use App\Actions\Orders\CreateOrderAction;
 use App\Enums\BonusTransactionType;
-use App\Enums\OrderRecipientType;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
+use App\Enums\RecipientType;
 use App\Models\Client;
 use App\Models\Institution;
 use App\Models\Order;
@@ -34,7 +34,7 @@ it('creates an admin order and reserves client bonuses', function () {
 
     expect($order->status)->toBe(OrderStatus::New)
         ->and($order->source)->toBe(OrderSource::Admin)
-        ->and($order->recipient_type)->toBe(OrderRecipientType::Client)
+        ->and($order->recipient_type)->toBe(RecipientType::Client)
         ->and($order->recipient_first_name)->toBe('Ivan')
         ->and($order->recipient_last_name)->toBe('Petrov')
         ->and($order->recipient_bin)->toBe('123456789012')
@@ -73,7 +73,7 @@ it('creates an admin order for another recipient and stores a recipient snapshot
     $order = app(CreateOrderAction::class)->handle([
         'client_id' => $client->getKey(),
         'institution_id' => $institution->getKey(),
-        'recipient_type' => OrderRecipientType::Other,
+        'recipient_type' => RecipientType::Other,
         'recipient_first_name' => 'Aruzhan',
         'recipient_last_name' => 'Sadykova',
         'recipient_bin' => '870101300123',
@@ -81,11 +81,39 @@ it('creates an admin order for another recipient and stores a recipient snapshot
         'total_weight_grams' => 800,
     ], OrderSource::Admin, $admin->getKey());
 
-    expect($order->recipient_type)->toBe(OrderRecipientType::Other)
+    expect($order->recipient_type)->toBe(RecipientType::Other)
         ->and($order->recipient_first_name)->toBe('Aruzhan')
         ->and($order->recipient_last_name)->toBe('Sadykova')
         ->and($order->recipient_bin)->toBe('870101300123')
         ->and($order->client_id)->toBe($client->getKey());
+});
+
+it('uses the saved client recipient when the client registers another recipient', function () {
+    $admin = User::factory()->create();
+    $client = Client::factory()->create([
+        'first_name' => 'Client',
+        'last_name' => 'Owner',
+        'bin' => '999999999999',
+        'recipient_type' => RecipientType::Other,
+        'recipient_first_name' => 'Aruzhan',
+        'recipient_last_name' => 'Sadykova',
+        'recipient_bin' => '870101300123',
+        'bonus_balance' => 500,
+        'bonus_reserved' => 0,
+    ]);
+    $institution = Institution::factory()->create();
+
+    $order = app(CreateOrderAction::class)->handle([
+        'client_id' => $client->getKey(),
+        'institution_id' => $institution->getKey(),
+        'total_bonus' => 120,
+        'total_weight_grams' => 800,
+    ], OrderSource::Admin, $admin->getKey());
+
+    expect($order->recipient_type)->toBe(RecipientType::Other)
+        ->and($order->recipient_first_name)->toBe('Aruzhan')
+        ->and($order->recipient_last_name)->toBe('Sadykova')
+        ->and($order->recipient_bin)->toBe('870101300123');
 });
 
 it('rejects creating an order for another recipient without recipient details', function () {
@@ -98,7 +126,7 @@ it('rejects creating an order for another recipient without recipient details', 
     expect(fn () => app(CreateOrderAction::class)->handle([
         'client_id' => $client->getKey(),
         'institution_id' => $institution->getKey(),
-        'recipient_type' => OrderRecipientType::Other,
+        'recipient_type' => RecipientType::Other,
         'recipient_first_name' => '',
         'total_bonus' => 100,
         'total_weight_grams' => 500,

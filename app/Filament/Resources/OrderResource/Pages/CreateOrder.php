@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Actions\Orders\CreateOrderAction;
-use App\Enums\OrderRecipientType;
 use App\Enums\OrderSource;
+use App\Enums\RecipientType;
 use App\Filament\Resources\OrderResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -24,11 +24,18 @@ class CreateOrder extends CreateRecord
      */
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (! $data['recipient_type'] instanceof OrderRecipientType) {
+        $rawRecipientType = $data['recipient_type'] ?? RecipientType::Client;
+        $recipientType = $rawRecipientType instanceof RecipientType
+            ? $rawRecipientType
+            : RecipientType::tryFrom((string) $rawRecipientType);
+
+        if (! $recipientType) {
             throw ValidationException::withMessages([
                 'data.recipient_type' => 'Некорректный тип получателя заказа.',
             ]);
         }
+
+        $data['recipient_type'] = $recipientType;
 
         return $data;
     }

@@ -210,7 +210,7 @@ return [
             'reserve_return' => 'Возврат резерва',
             'write_off' => 'Списание',
         ],
-        'order_recipient_type' => [
+        'recipient_type' => [
             'client' => 'Сам клиент',
             'other' => 'Другой получатель',
         ],

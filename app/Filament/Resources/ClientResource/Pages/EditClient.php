@@ -12,6 +12,15 @@ class EditClient extends EditRecord
 
     protected static string $resource = ClientResource::class;
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return ClientResource::normalizeRecipientData($data);
+    }
+
     protected function getHeaderActions(): array
     {
         return $this->getClientHeaderActions();

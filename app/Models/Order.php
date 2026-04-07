@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use App\Enums\OrderRecipientType;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
+use App\Enums\RecipientType;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,7 +30,7 @@ class Order extends Model
     {
         return [
             'source' => OrderSource::class,
-            'recipient_type' => OrderRecipientType::class,
+            'recipient_type' => RecipientType::class,
             'status' => OrderStatus::class,
             'total_bonus' => 'integer',
             'total_weight_grams' => 'integer',
