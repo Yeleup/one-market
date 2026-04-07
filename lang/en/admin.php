@@ -187,13 +187,11 @@ return [
             'cancel' => 'Cancel',
             'move_to_delivered' => 'Delivered',
             'move_to_processing' => 'Move to processing',
-            'move_to_ready_for_delivery' => 'Ready for delivery',
             'notifications' => [
                 'cancelled' => 'Order cancelled.',
                 'delivered' => 'Order marked as delivered.',
                 'failed' => 'Could not change order status.',
                 'processing' => 'Order status changed to "Processing".',
-                'ready_for_delivery' => 'Order status changed to "Ready for delivery".',
             ],
         ],
         'user' => [
@@ -225,7 +223,6 @@ return [
             'delivered' => 'Delivered',
             'new' => 'New',
             'processing' => 'Processing',
-            'ready_for_delivery' => 'Ready for delivery',
         ],
         'user_role' => [
             'admin' => 'Admin',

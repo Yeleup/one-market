@@ -18,7 +18,6 @@ trait HasOrderHeaderActions
     {
         return [
             $this->makeMoveToProcessingAction(),
-            $this->makeMoveToReadyForDeliveryAction(),
             $this->makeMoveToDeliveredAction(),
             $this->makeCancelOrderAction(),
             OrderResource::makeDeleteAction()
@@ -40,27 +39,13 @@ trait HasOrderHeaderActions
             )->send());
     }
 
-    protected function makeMoveToReadyForDeliveryAction(): Action
-    {
-        return Action::make('markOrderAsReadyForDelivery')
-            ->label(__('admin.actions.order.move_to_ready_for_delivery'))
-            ->color('info')
-            ->icon('heroicon-o-truck')
-            ->visible(fn (): bool => $this->getRecord()->status === OrderStatus::Processing)
-            ->requiresConfirmation()
-            ->action(fn (): mixed => $this->transitionOrderStatus(
-                OrderStatus::ReadyForDelivery,
-                __('admin.actions.order.notifications.ready_for_delivery'),
-            )->send());
-    }
-
     protected function makeMoveToDeliveredAction(): Action
     {
         return Action::make('markOrderAsDelivered')
             ->label(__('admin.actions.order.move_to_delivered'))
             ->color('success')
             ->icon('heroicon-o-check-circle')
-            ->visible(fn (): bool => $this->getRecord()->status === OrderStatus::ReadyForDelivery)
+            ->visible(fn (): bool => $this->getRecord()->status === OrderStatus::Processing)
             ->requiresConfirmation()
             ->action(fn (): mixed => $this->transitionOrderStatus(
                 OrderStatus::Delivered,

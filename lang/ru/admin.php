@@ -187,13 +187,11 @@ return [
             'cancel' => 'Отменить',
             'move_to_delivered' => 'Доставлено',
             'move_to_processing' => 'В обработку',
-            'move_to_ready_for_delivery' => 'Готов к доставке',
             'notifications' => [
                 'cancelled' => 'Заказ отменён.',
                 'delivered' => 'Заказ отмечен как доставленный.',
                 'failed' => 'Не удалось изменить статус заказа.',
                 'processing' => 'Статус заказа изменён на "В обработке".',
-                'ready_for_delivery' => 'Статус заказа изменён на "Готов к доставке".',
             ],
         ],
         'user' => [
@@ -225,7 +223,6 @@ return [
             'delivered' => 'Доставлен',
             'new' => 'Новый',
             'processing' => 'В обработке',
-            'ready_for_delivery' => 'Готов к доставке',
         ],
         'user_role' => [
             'admin' => 'Администратор',

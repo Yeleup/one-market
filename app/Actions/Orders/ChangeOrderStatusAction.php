@@ -38,8 +38,7 @@ class ChangeOrderStatusAction
     {
         $isAllowed = match ($targetStatus) {
             OrderStatus::Processing => $currentStatus === OrderStatus::New,
-            OrderStatus::ReadyForDelivery => $currentStatus === OrderStatus::Processing,
-            OrderStatus::Delivered => $currentStatus === OrderStatus::ReadyForDelivery,
+            OrderStatus::Delivered => $currentStatus === OrderStatus::Processing,
             OrderStatus::Cancelled => ! in_array($currentStatus, [OrderStatus::Delivered, OrderStatus::Cancelled], true),
             default => false,
         };

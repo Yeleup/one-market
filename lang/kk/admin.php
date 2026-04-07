@@ -187,13 +187,11 @@ return [
             'cancel' => 'Болдырмау',
             'move_to_delivered' => 'Жеткізілді',
             'move_to_processing' => 'Өңдеуге жіберу',
-            'move_to_ready_for_delivery' => 'Жеткізуге дайын',
             'notifications' => [
                 'cancelled' => 'Тапсырыс болдырылды.',
                 'delivered' => 'Тапсырыс жеткізілген деп белгіленді.',
                 'failed' => 'Тапсырыс күйін өзгерту мүмкін болмады.',
                 'processing' => 'Тапсырыс күйі "Өңдеуде" болып өзгертілді.',
-                'ready_for_delivery' => 'Тапсырыс күйі "Жеткізуге дайын" болып өзгертілді.',
             ],
         ],
         'user' => [
@@ -225,7 +223,6 @@ return [
             'delivered' => 'Жеткізілді',
             'new' => 'Жаңа',
             'processing' => 'Өңдеуде',
-            'ready_for_delivery' => 'Жеткізуге дайын',
         ],
         'user_role' => [
             'admin' => 'Әкімші',

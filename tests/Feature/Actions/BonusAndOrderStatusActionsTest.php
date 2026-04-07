@@ -74,7 +74,7 @@ it('writes off reserved bonuses when an order is delivered', function () {
     ]);
     $order = Order::factory()->create([
         'client_id' => $client->getKey(),
-        'status' => OrderStatus::ReadyForDelivery,
+        'status' => OrderStatus::Processing,
         'reserved_bonus_amount' => 200,
     ]);
 
