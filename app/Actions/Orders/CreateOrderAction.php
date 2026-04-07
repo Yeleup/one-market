@@ -16,7 +16,7 @@ class CreateOrderAction
     /**
      * @param  array{
      *     client_id: int|string,
-     *     institution_id: int|string,
+     *     institution_id?: int|string|null,
      *     recipient_type?: RecipientType|null,
      *     recipient_first_name?: string|null,
      *     recipient_last_name?: string|null,
@@ -51,7 +51,7 @@ class CreateOrderAction
     /**
      * @param  array{
      *     client_id: int|string,
-     *     institution_id: int|string,
+     *     institution_id?: int|string|null,
      *     recipient_type?: RecipientType|null,
      *     recipient_first_name?: string|null,
      *     recipient_last_name?: string|null,
@@ -66,10 +66,17 @@ class CreateOrderAction
     private function preparePayload(array $attributes, OrderSource $source, ?int $performedByUserId, Client $client): array
     {
         $totalBonus = (int) ($attributes['total_bonus'] ?? 0);
+        $institutionId = (int) ($attributes['institution_id'] ?? $client->institution_id ?? 0);
+
+        if ($institutionId <= 0) {
+            throw ValidationException::withMessages([
+                'data.institution_id' => 'Учреждение обязательно для оформления заказа.',
+            ]);
+        }
 
         return [
             'client_id' => (int) $attributes['client_id'],
-            'institution_id' => (int) $attributes['institution_id'],
+            'institution_id' => $institutionId,
             'source' => $source,
             ...$this->resolveRecipientPayload($attributes, $client),
             'status' => OrderStatus::New,

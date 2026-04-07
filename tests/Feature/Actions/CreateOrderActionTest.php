@@ -116,6 +116,24 @@ it('uses the saved client recipient when the client registers another recipient'
         ->and($order->recipient_bin)->toBe('870101300123');
 });
 
+it('uses the client institution when it is not provided explicitly', function () {
+    $admin = User::factory()->create();
+    $institution = Institution::factory()->create();
+    $client = Client::factory()->create([
+        'institution_id' => $institution->getKey(),
+        'bonus_balance' => 500,
+        'bonus_reserved' => 0,
+    ]);
+
+    $order = app(CreateOrderAction::class)->handle([
+        'client_id' => $client->getKey(),
+        'total_bonus' => 120,
+        'total_weight_grams' => 800,
+    ], OrderSource::Admin, $admin->getKey());
+
+    expect($order->institution_id)->toBe($institution->getKey());
+});
+
 it('rejects creating an order for another recipient without recipient details', function () {
     $client = Client::factory()->create([
         'bonus_balance' => 500,

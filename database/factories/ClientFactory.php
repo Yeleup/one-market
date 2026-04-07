@@ -25,6 +25,7 @@ class ClientFactory extends Factory
             'bin' => fake()->unique()->numerify('############'),
             'login' => fake()->unique()->userName(),
             'password' => static::$password ??= Hash::make('password'),
+            'institution_id' => null,
             'recipient_type' => RecipientType::Client,
             'recipient_first_name' => null,
             'recipient_last_name' => null,

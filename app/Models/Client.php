@@ -7,6 +7,7 @@ use Database\Factories\ClientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -16,6 +17,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
     'bin',
     'login',
     'password',
+    'institution_id',
     'recipient_type',
     'recipient_first_name',
     'recipient_last_name',
@@ -65,6 +67,12 @@ class Client extends Authenticatable
         }
 
         return $this->bin;
+    }
+
+    /** @return BelongsTo<Institution, $this> */
+    public function institution(): BelongsTo
+    {
+        return $this->belongsTo(Institution::class);
     }
 
     /** @return HasMany<Order, $this> */

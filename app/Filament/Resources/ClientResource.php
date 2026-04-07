@@ -129,6 +129,11 @@ class ClientResource extends Resource
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
+                Select::make('institution_id')
+                    ->label(__('admin.common.fields.institution'))
+                    ->relationship(name: 'institution', titleAttribute: 'id')
+                    ->searchable()
+                    ->preload(),
                 Select::make('recipient_type')
                     ->label(__('admin.common.fields.recipient_type'))
                     ->options(RecipientType::class)
@@ -185,6 +190,7 @@ class ClientResource extends Resource
                     ->searchable(['first_name', 'last_name']),
                 TextColumn::make('bin')->label(__('admin.common.fields.bin'))->searchable(),
                 TextColumn::make('login')->label(__('admin.common.fields.login'))->searchable(),
+                TextColumn::make('institution.id')->label(__('admin.common.fields.institution')),
                 TextColumn::make('recipient_type')->label(__('admin.common.fields.recipient_type'))->badge(),
                 TextColumn::make('recipient_full_name')->label(__('admin.common.fields.recipient')),
                 TextColumn::make('bonus_balance')->label(__('admin.common.fields.bonus_balance'))->sortable(),

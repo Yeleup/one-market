@@ -82,6 +82,7 @@ class OrderResource extends Resource
                                         $client = filled($state) ? Client::query()->find($state) : null;
 
                                         if (! $client) {
+                                            $set('institution_id', null);
                                             $set('recipient_type', RecipientType::Client->value);
                                             $set('recipient_first_name', null);
                                             $set('recipient_last_name', null);
@@ -92,6 +93,7 @@ class OrderResource extends Resource
 
                                         $recipientType = $client->recipient_type ?? RecipientType::Client;
 
+                                        $set('institution_id', $client->institution_id);
                                         $set('recipient_type', $recipientType->value);
                                         $set('recipient_first_name', $recipientType === RecipientType::Other ? $client->recipient_first_name : null);
                                         $set('recipient_last_name', $recipientType === RecipientType::Other ? $client->recipient_last_name : null);
