@@ -3,10 +3,12 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Actions\Orders\CreateOrderAction;
+use App\Enums\OrderRecipientType;
 use App\Enums\OrderSource;
 use App\Filament\Resources\OrderResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 use function auth;
 
@@ -15,6 +17,21 @@ class CreateOrder extends CreateRecord
     protected static string $resource = OrderResource::class;
 
     protected ?bool $hasDatabaseTransactions = true;
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        if (! $data['recipient_type'] instanceof OrderRecipientType) {
+            throw ValidationException::withMessages([
+                'data.recipient_type' => 'Некорректный тип получателя заказа.',
+            ]);
+        }
+
+        return $data;
+    }
 
     /**
      * @param  array<string, mixed>  $data

@@ -73,35 +73,6 @@ it('creates an admin order for another recipient and stores a recipient snapshot
     $order = app(CreateOrderAction::class)->handle([
         'client_id' => $client->getKey(),
         'institution_id' => $institution->getKey(),
-        'recipient_type' => OrderRecipientType::Other->value,
-        'recipient_first_name' => 'Aruzhan',
-        'recipient_last_name' => 'Sadykova',
-        'recipient_bin' => '870101300123',
-        'total_bonus' => 120,
-        'total_weight_grams' => 800,
-    ], OrderSource::Admin, $admin->getKey());
-
-    expect($order->recipient_type)->toBe(OrderRecipientType::Other)
-        ->and($order->recipient_first_name)->toBe('Aruzhan')
-        ->and($order->recipient_last_name)->toBe('Sadykova')
-        ->and($order->recipient_bin)->toBe('870101300123')
-        ->and($order->client_id)->toBe($client->getKey());
-});
-
-it('accepts an enum instance for the recipient type', function () {
-    $admin = User::factory()->create();
-    $client = Client::factory()->create([
-        'first_name' => 'Client',
-        'last_name' => 'Owner',
-        'bin' => '999999999999',
-        'bonus_balance' => 500,
-        'bonus_reserved' => 0,
-    ]);
-    $institution = Institution::factory()->create();
-
-    $order = app(CreateOrderAction::class)->handle([
-        'client_id' => $client->getKey(),
-        'institution_id' => $institution->getKey(),
         'recipient_type' => OrderRecipientType::Other,
         'recipient_first_name' => 'Aruzhan',
         'recipient_last_name' => 'Sadykova',
@@ -127,7 +98,7 @@ it('rejects creating an order for another recipient without recipient details', 
     expect(fn () => app(CreateOrderAction::class)->handle([
         'client_id' => $client->getKey(),
         'institution_id' => $institution->getKey(),
-        'recipient_type' => OrderRecipientType::Other->value,
+        'recipient_type' => OrderRecipientType::Other,
         'recipient_first_name' => '',
         'total_bonus' => 100,
         'total_weight_grams' => 500,
