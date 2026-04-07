@@ -17,7 +17,7 @@ class CreateOrderAction
      * @param  array{
      *     client_id: int|string,
      *     institution_id: int|string,
-     *     recipient_type?: string|null,
+     *     recipient_type?: OrderRecipientType|string|null,
      *     recipient_first_name?: string|null,
      *     recipient_last_name?: string|null,
      *     recipient_bin?: string|null,
@@ -52,7 +52,7 @@ class CreateOrderAction
      * @param  array{
      *     client_id: int|string,
      *     institution_id: int|string,
-     *     recipient_type?: string|null,
+     *     recipient_type?: OrderRecipientType|string|null,
      *     recipient_first_name?: string|null,
      *     recipient_last_name?: string|null,
      *     recipient_bin?: string|null,
@@ -86,7 +86,7 @@ class CreateOrderAction
 
     /**
      * @param  array{
-     *     recipient_type?: string|null,
+     *     recipient_type?: OrderRecipientType|string|null,
      *     recipient_first_name?: string|null,
      *     recipient_last_name?: string|null,
      *     recipient_bin?: string|null
@@ -100,7 +100,10 @@ class CreateOrderAction
      */
     private function resolveRecipientPayload(array $attributes, Client $client): array
     {
-        $recipientType = OrderRecipientType::tryFrom((string) ($attributes['recipient_type'] ?? OrderRecipientType::Client->value));
+        $rawRecipientType = $attributes['recipient_type'] ?? OrderRecipientType::Client;
+        $recipientType = $rawRecipientType instanceof OrderRecipientType
+            ? $rawRecipientType
+            : OrderRecipientType::tryFrom((string) $rawRecipientType);
 
         if (! $recipientType) {
             throw ValidationException::withMessages([
