@@ -74,8 +74,8 @@
                 <td>{{ $order->client?->full_name ?? '—' }}</td>
             </tr>
             <tr>
-                <td>{{ __('admin.common.fields.login') }}</td>
-                <td>{{ $order->client?->login ?? '—' }}</td>
+                <td>{{ __('admin.common.fields.bin') }}</td>
+                <td>{{ $order->client?->bin ?? '—' }}</td>
             </tr>
             <tr>
                 <td>{{ __('admin.common.fields.institution') }}</td>

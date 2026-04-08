@@ -50,7 +50,7 @@ class BonusTransactionResource extends Resource
             ->components([
                 Select::make('client_id')
                     ->label(__('admin.common.fields.client'))
-                    ->relationship(name: 'client', titleAttribute: 'login')
+                    ->relationship(name: 'client', titleAttribute: 'bin')
                     ->required()
                     ->searchable()
                     ->preload(),
@@ -90,7 +90,9 @@ class BonusTransactionResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
-                TextColumn::make('client.login')->label(__('admin.common.fields.client'))->searchable(),
+                TextColumn::make('client.full_name')
+                    ->label(__('admin.common.fields.client'))
+                    ->searchable(['client.first_name', 'client.last_name', 'client.bin']),
                 TextColumn::make('order.id')->label(__('admin.common.fields.order_number')),
                 TextColumn::make('type')->label(__('admin.common.fields.type'))->badge(),
                 TextColumn::make('amount')->label(__('admin.common.fields.amount'))->sortable(),

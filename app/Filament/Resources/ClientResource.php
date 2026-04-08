@@ -133,11 +133,6 @@ class ClientResource extends Resource
                                     ->required()
                                     ->unique(ignoreRecord: true)
                                     ->maxLength(255),
-                                TextInput::make('login')
-                                    ->label(__('admin.common.fields.login'))
-                                    ->required()
-                                    ->unique(ignoreRecord: true)
-                                    ->maxLength(255),
                                 TextInput::make('password')
                                     ->label(__('admin.common.fields.password'))
                                     ->password()
@@ -217,7 +212,6 @@ class ClientResource extends Resource
                     ->label(__('admin.common.fields.client'))
                     ->searchable(['first_name', 'last_name']),
                 TextColumn::make('bin')->label(__('admin.common.fields.bin'))->searchable(),
-                TextColumn::make('login')->label(__('admin.common.fields.login'))->searchable(),
                 TextColumn::make('institution.localized_name')->label(__('admin.common.fields.institution')),
                 TextColumn::make('recipient_type')->label(__('admin.common.fields.recipient_type'))->badge(),
                 TextColumn::make('recipient_full_name')->label(__('admin.common.fields.recipient')),

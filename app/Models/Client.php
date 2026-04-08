@@ -15,7 +15,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
     'first_name',
     'last_name',
     'bin',
-    'login',
     'password',
     'institution_id',
     'recipient_type',
@@ -67,6 +66,11 @@ class Client extends Authenticatable
         }
 
         return $this->bin;
+    }
+
+    public function getAuthIdentifierName(): string
+    {
+        return 'bin';
     }
 
     /** @return BelongsTo<Institution, $this> */

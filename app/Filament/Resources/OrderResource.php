@@ -74,7 +74,7 @@ class OrderResource extends Resource
                             ->schema([
                                 Select::make('client_id')
                                     ->label(__('admin.common.fields.client'))
-                                    ->relationship(name: 'client', titleAttribute: 'login')
+                                    ->relationship(name: 'client', titleAttribute: 'bin')
                                     ->required()
                                     ->disabled(fn (string $operation): bool => $operation !== 'create')
                                     ->dehydrated(fn (string $operation): bool => $operation === 'create')
@@ -327,7 +327,9 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
-                TextColumn::make('client.login')->label(__('admin.common.fields.client'))->searchable(),
+                TextColumn::make('client.full_name')
+                    ->label(__('admin.common.fields.client'))
+                    ->searchable(['client.first_name', 'client.last_name', 'client.bin']),
                 TextColumn::make('recipient_full_name')
                     ->label(__('admin.common.fields.recipient')),
                 TextColumn::make('institution.localized_name')->label(__('admin.common.fields.institution')),
