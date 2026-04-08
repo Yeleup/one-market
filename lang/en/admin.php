@@ -53,6 +53,7 @@ return [
             'new_password' => 'New password',
             'order_number' => 'Order #',
             'password' => 'Password',
+            'parent_category' => 'Parent category',
             'performed_by' => 'Performed by',
             'placed_at' => 'Placed at',
             'price_bonus' => 'Price bonus',

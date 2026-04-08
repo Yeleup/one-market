@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Concerns\HasTranslationTabs;
+use App\Filament\Forms\Components\TranslatableRelationshipSelect;
 use App\Filament\Resources\CategoryResource\Pages;
 use App\Models\Category;
 use App\Models\Language;
@@ -64,6 +65,17 @@ class CategoryResource extends Resource
     {
         return $schema
             ->components([
+                TranslatableRelationshipSelect::make('parent_id')
+                    ->label(__('admin.common.fields.parent_category'))
+                    ->translatableRelationship('parent', ignoreRecord: true)
+                    ->fallbackLabelUsing(
+                        fn (Category $record): string => sprintf(
+                            '%s #%d',
+                            __('admin.resources.category.model_label'),
+                            $record->getKey(),
+                        ),
+                    )
+                    ->preload(),
                 TextInput::make('slug')
                     ->label(__('admin.common.fields.slug'))
                     ->required()
@@ -94,6 +106,8 @@ class CategoryResource extends Resource
                     ->searchable(
                         query: fn (Builder $query, string $search): Builder => $query->searchLocalizedName($search),
                     ),
+                TextColumn::make('parent.localized_name')
+                    ->label(__('admin.common.fields.parent_category')),
                 TextColumn::make('slug')->label(__('admin.common.fields.slug'))->searchable(),
                 IconColumn::make('is_active')->label(__('admin.common.fields.is_active'))->boolean(),
                 TextColumn::make('products_count')->counts('products')->label(__('admin.resources.category.fields.products_count')),
@@ -112,7 +126,11 @@ class CategoryResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withLocalizedName();
+        return parent::getEloquentQuery()
+            ->withLocalizedName()
+            ->with([
+                'parent' => fn ($query) => $query->withLocalizedName(),
+            ]);
     }
 
     public static function getRelations(): array

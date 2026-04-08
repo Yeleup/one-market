@@ -53,6 +53,7 @@ return [
             'new_password' => 'Жаңа құпиясөз',
             'order_number' => 'Тапсырыс #',
             'password' => 'Құпиясөз',
+            'parent_category' => 'Ата-ана санат',
             'performed_by' => 'Орындаған',
             'placed_at' => 'Орналастырылған уақыты',
             'price_bonus' => 'Бонус бағасы',

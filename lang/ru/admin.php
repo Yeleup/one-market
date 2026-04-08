@@ -53,6 +53,7 @@ return [
             'new_password' => 'Новый пароль',
             'order_number' => 'Заказ #',
             'password' => 'Пароль',
+            'parent_category' => 'Родительская категория',
             'performed_by' => 'Кто выполнил',
             'placed_at' => 'Размещён',
             'price_bonus' => 'Цена в бонусах',
