@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'dashboard' => [
+        'active' => 'Белсенді: :count',
+        'latest_orders' => 'Соңғы тапсырыстар',
+        'need_attention' => 'Назар аударуды қажет етеді',
+        'orders_in_processing' => 'Өңдеудегі тапсырыстар',
+        'today' => 'Бүгін: :count',
+    ],
     'tabs' => [
         'translations' => 'Аудармалар',
     ],

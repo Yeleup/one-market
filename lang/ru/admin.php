@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'dashboard' => [
+        'active' => 'Активно: :count',
+        'latest_orders' => 'Последние заказы',
+        'need_attention' => 'Требуют внимания',
+        'orders_in_processing' => 'Заказы в обработке',
+        'today' => 'Сегодня: :count',
+    ],
     'tabs' => [
         'translations' => 'Переводы',
     ],

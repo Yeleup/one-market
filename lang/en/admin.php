@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'dashboard' => [
+        'active' => 'Active: :count',
+        'latest_orders' => 'Latest orders',
+        'need_attention' => 'Need attention',
+        'orders_in_processing' => 'Orders in processing',
+        'today' => 'Today: :count',
+    ],
     'tabs' => [
         'translations' => 'Translations',
     ],
