@@ -26,7 +26,7 @@ class StatusHistoriesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('id')
             ->columns([
-                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->since()->sortable(),
                 TextColumn::make('from_status')->label(__('admin.common.fields.from_status'))->badge(),
                 TextColumn::make('to_status')->label(__('admin.common.fields.to_status'))->badge(),
                 TextColumn::make('changedByUser.name')->label(__('admin.common.fields.changed_by')),

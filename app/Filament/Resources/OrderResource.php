@@ -335,8 +335,8 @@ class OrderResource extends Resource
                 TextColumn::make('status')->label(__('admin.common.fields.status'))->badge(),
                 TextColumn::make('total_bonus')->label(__('admin.common.fields.total_bonus'))->sortable(),
                 TextColumn::make('total_weight_grams')->label(__('admin.common.fields.total_weight'))->suffix(' g')->sortable(),
-                TextColumn::make('placed_at')->label(__('admin.common.fields.placed_at'))->dateTime()->sortable(),
-                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('placed_at')->label(__('admin.common.fields.placed_at'))->since()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->since()->sortable(),
             ])
             ->defaultSort('id', 'desc')
             ->filters([

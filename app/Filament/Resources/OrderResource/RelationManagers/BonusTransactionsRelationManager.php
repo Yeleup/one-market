@@ -28,7 +28,7 @@ class BonusTransactionsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('id')
             ->columns([
-                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->since()->sortable(),
                 TextColumn::make('type')->label(__('admin.common.fields.type'))->badge(),
                 TextColumn::make('amount')->label(__('admin.common.fields.amount'))->sortable(),
                 TextColumn::make('balance_delta')->label(__('admin.common.fields.balance_delta'))->sortable(),

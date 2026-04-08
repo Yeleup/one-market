@@ -24,6 +24,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
@@ -227,9 +228,22 @@ class ClientResource extends Resource
                     ->state(fn (Client $record): int => max(0, $record->bonus_balance - $record->bonus_reserved))
                     ->sortable(false),
                 IconColumn::make('is_active')->label(__('admin.common.fields.is_active'))->boolean(),
-                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->since()->sortable(),
             ])
             ->defaultSort('id', 'desc')
+            ->filters([
+                SelectFilter::make('institution_id')
+                    ->label(__('admin.common.fields.institution'))
+                    ->options(fn (): array => Institution::query()
+                        ->withLocalizedName()
+                        ->orderBy('localized_name')
+                        ->get()
+                        ->mapWithKeys(fn (Institution $institution): array => [
+                            $institution->getKey() => $institution->localized_name
+                                ?? sprintf('%s #%d', __('admin.resources.institution.model_label'), $institution->getKey()),
+                        ])
+                        ->all()),
+            ])
             ->recordActions([
                 EditAction::make(),
             ])

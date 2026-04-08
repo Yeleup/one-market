@@ -32,7 +32,7 @@ class OrdersRelationManager extends RelationManager
                 TextColumn::make('institution.id')->label(__('admin.common.fields.institution')),
                 TextColumn::make('total_bonus')->label(__('admin.common.fields.total_bonus'))->sortable(),
                 TextColumn::make('total_weight_grams')->label(__('admin.common.fields.total_weight'))->suffix(' g')->sortable(),
-                TextColumn::make('placed_at')->label(__('admin.common.fields.placed_at'))->dateTime()->sortable(),
+                TextColumn::make('placed_at')->label(__('admin.common.fields.placed_at'))->since()->sortable(),
             ])
             ->filters([
                 SelectFilter::make('status')

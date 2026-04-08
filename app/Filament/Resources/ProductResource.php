@@ -173,7 +173,7 @@ class ProductResource extends Resource
                 TextColumn::make('weight_grams')->label(__('admin.common.fields.weight'))->suffix(' g')->sortable(),
                 TextColumn::make('stock_quantity')->label(__('admin.common.fields.stock_quantity'))->sortable(),
                 IconColumn::make('is_active')->label(__('admin.common.fields.is_active'))->boolean(),
-                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->since()->sortable(),
             ])
             ->defaultSort('id', 'desc')
             ->filters([

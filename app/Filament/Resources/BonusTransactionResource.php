@@ -97,7 +97,7 @@ class BonusTransactionResource extends Resource
                 TextColumn::make('balance_delta')->label(__('admin.common.fields.balance_delta'))->sortable(),
                 TextColumn::make('reserved_delta')->label(__('admin.common.fields.reserved_delta'))->sortable(),
                 TextColumn::make('performedByUser.name')->label(__('admin.common.fields.performed_by')),
-                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->since()->sortable(),
             ])
             ->defaultSort('id', 'desc')
             ->filters([

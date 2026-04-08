@@ -97,7 +97,7 @@ class CategoryResource extends Resource
                 TextColumn::make('slug')->label(__('admin.common.fields.slug'))->searchable(),
                 IconColumn::make('is_active')->label(__('admin.common.fields.is_active'))->boolean(),
                 TextColumn::make('products_count')->counts('products')->label(__('admin.resources.category.fields.products_count')),
-                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->since()->sortable(),
             ])
             ->defaultSort('id', 'desc')
             ->recordActions([

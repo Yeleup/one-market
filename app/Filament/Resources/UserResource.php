@@ -83,7 +83,7 @@ class UserResource extends Resource
                 TextColumn::make('email')->label(__('admin.common.fields.email'))->searchable(),
                 TextColumn::make('role')->label(__('admin.common.fields.role'))->badge(),
                 IconColumn::make('is_active')->label(__('admin.common.fields.is_active'))->boolean(),
-                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
+                TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->since()->sortable(),
             ])
             ->defaultSort('id', 'desc')
             ->recordActions([

@@ -36,6 +36,8 @@ class EditLanguage extends EditRecord
                         ->success()
                         ->title(__('admin.resources.language.notifications.default_updated'))
                         ->send();
+
+                    $this->redirect(LanguageResource::getUrl('index'));
                 }),
             DeleteAction::make(),
         ];
