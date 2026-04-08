@@ -4,6 +4,7 @@ use App\Actions\Bonuses\AccrueBonusesAction;
 use App\Actions\Bonuses\ManualDebitBonusesAction;
 use App\Actions\Orders\ChangeOrderStatusAction;
 use App\Enums\BonusTransactionType;
+use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use App\Models\Client;
 use App\Models\Order;
@@ -120,6 +121,34 @@ it('returns reserved bonuses when an order is cancelled', function () {
     expect($transaction->type)->toBe(BonusTransactionType::ReserveReturn)
         ->and($transaction->amount)->toBe(200)
         ->and($transaction->balance_delta)->toBe(0)
+        ->and($transaction->reserved_delta)->toBe(-200)
+        ->and($transaction->performed_by_user_id)->toBe($admin->getKey());
+});
+
+it('writes off reserved bonuses for admin orders even when the client goes negative', function () {
+    $admin = User::factory()->create();
+    $client = Client::factory()->create([
+        'bonus_balance' => 50,
+        'bonus_reserved' => 200,
+    ]);
+    $order = Order::factory()->create([
+        'client_id' => $client->getKey(),
+        'source' => OrderSource::Admin,
+        'status' => OrderStatus::Processing,
+        'reserved_bonus_amount' => 200,
+    ]);
+
+    $updatedOrder = app(ChangeOrderStatusAction::class)->handle($order, OrderStatus::Delivered, $admin->getKey());
+
+    expect($updatedOrder->status)->toBe(OrderStatus::Delivered)
+        ->and($client->fresh()->bonus_balance)->toBe(-150)
+        ->and($client->fresh()->bonus_reserved)->toBe(0);
+
+    $transaction = $updatedOrder->bonusTransactions()->sole();
+
+    expect($transaction->type)->toBe(BonusTransactionType::WriteOff)
+        ->and($transaction->amount)->toBe(200)
+        ->and($transaction->balance_delta)->toBe(-200)
         ->and($transaction->reserved_delta)->toBe(-200)
         ->and($transaction->performed_by_user_id)->toBe($admin->getKey());
 });

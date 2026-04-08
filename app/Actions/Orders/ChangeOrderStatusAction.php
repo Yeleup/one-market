@@ -3,6 +3,7 @@
 namespace App\Actions\Orders;
 
 use App\Enums\BonusTransactionType;
+use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use App\Models\Client;
 use App\Models\Order;
@@ -99,7 +100,7 @@ class ChangeOrderStatusAction
 
     private function writeOffReservedBonuses(Client $client, Order $order, int $amount, ?int $changedByUserId): void
     {
-        if ($client->bonus_balance < $amount) {
+        if ($order->source !== OrderSource::Admin && $client->bonus_balance < $amount) {
             throw new RuntimeException('У клиента недостаточно бонусов для окончательного списания.');
         }
 

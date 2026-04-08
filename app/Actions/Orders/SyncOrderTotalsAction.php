@@ -3,6 +3,7 @@
 namespace App\Actions\Orders;
 
 use App\Enums\BonusTransactionType;
+use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use App\Models\Client;
 use App\Models\Order;
@@ -73,7 +74,7 @@ class SyncOrderTotalsAction
         if ($reserveDelta > 0) {
             $availableBonusBalance = (int) $client->bonus_balance - (int) $client->bonus_reserved;
 
-            if ($reserveDelta > $availableBonusBalance) {
+            if ($order->source !== OrderSource::Admin && $reserveDelta > $availableBonusBalance) {
                 throw new RuntimeException(__('admin.actions.order.sync.errors.insufficient_available_bonuses'));
             }
         }

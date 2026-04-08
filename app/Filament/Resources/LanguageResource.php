@@ -79,6 +79,7 @@ class LanguageResource extends Resource
     protected static function getAvailableLanguageOptions(): array
     {
         return collect(File::directories(lang_path()))
+            ->reject(fn (string $directory): bool => basename($directory) === 'vendor')
             ->mapWithKeys(fn (string $directory): array => [basename($directory) => basename($directory)])
             ->sortKeys()
             ->all();

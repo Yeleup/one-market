@@ -2,6 +2,7 @@
 
 use App\Actions\Orders\SyncOrderTotalsAction;
 use App\Enums\BonusTransactionType;
+use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use App\Models\Client;
 use App\Models\Order;
@@ -126,4 +127,41 @@ it('fails when updated order items require more bonuses than the client can rese
 
     expect(fn () => app(SyncOrderTotalsAction::class)->handle($order))
         ->toThrow(RuntimeException::class);
+});
+
+it('allows increasing reserve above available bonuses for admin orders', function () {
+    $admin = User::factory()->create();
+    $client = Client::factory()->create([
+        'bonus_balance' => 120,
+        'bonus_reserved' => 50,
+    ]);
+    $order = Order::factory()->create([
+        'client_id' => $client->getKey(),
+        'source' => OrderSource::Admin,
+        'status' => OrderStatus::New,
+        'total_bonus' => 50,
+        'total_weight_grams' => 100,
+        'reserved_bonus_amount' => 50,
+    ]);
+    $product = Product::factory()->create();
+
+    OrderItem::query()->create([
+        'order_id' => $order->getKey(),
+        'product_id' => $product->getKey(),
+        'product_name' => 'Product A',
+        'product_image' => null,
+        'price_bonus' => 130,
+        'weight_grams' => 100,
+        'quantity' => 1,
+        'line_total_bonus' => 130,
+        'line_total_weight_grams' => 100,
+    ]);
+
+    $syncedOrder = app(SyncOrderTotalsAction::class)->handle($order, $admin->getKey());
+
+    expect($syncedOrder->total_bonus)->toBe(130)
+        ->and($syncedOrder->reserved_bonus_amount)->toBe(130);
+
+    expect($client->fresh()->bonus_balance)->toBe(120)
+        ->and($client->fresh()->bonus_reserved)->toBe(130);
 });

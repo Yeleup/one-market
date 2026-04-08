@@ -166,8 +166,30 @@ it('does not create an order when the client lacks available bonuses', function 
         'institution_id' => $institution->getKey(),
         'total_bonus' => 100,
         'total_weight_grams' => 500,
-    ]))->toThrow(ValidationException::class);
+    ], OrderSource::Client))->toThrow(ValidationException::class);
 
     expect(Order::count())->toBe(0)
+        ->and($client->fresh()->bonus_reserved)->toBe(150);
+});
+
+it('creates an admin order even when the client lacks available bonuses', function () {
+    $admin = User::factory()->create();
+    $client = Client::factory()->create([
+        'bonus_balance' => 50,
+        'bonus_reserved' => 50,
+    ]);
+    $institution = Institution::factory()->create();
+
+    $order = app(CreateOrderAction::class)->handle([
+        'client_id' => $client->getKey(),
+        'institution_id' => $institution->getKey(),
+        'total_bonus' => 100,
+        'total_weight_grams' => 500,
+    ], OrderSource::Admin, $admin->getKey());
+
+    expect($order->source)->toBe(OrderSource::Admin)
+        ->and($order->reserved_bonus_amount)->toBe(100);
+
+    expect($client->fresh()->bonus_balance)->toBe(50)
         ->and($client->fresh()->bonus_reserved)->toBe(150);
 });

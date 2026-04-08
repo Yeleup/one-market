@@ -35,7 +35,7 @@ class CreateOrderAction
             $payload = $this->preparePayload($attributes, $source, $performedByUserId, $client);
             $reserveAmount = (int) $payload['reserved_bonus_amount'];
 
-            $this->assertEnoughAvailableBonuses($client, $reserveAmount);
+            $this->assertEnoughAvailableBonuses($client, $reserveAmount, $source);
 
             $order = Order::query()->create($payload);
 
@@ -176,8 +176,12 @@ class CreateOrderAction
         return $client;
     }
 
-    private function assertEnoughAvailableBonuses(Client $client, int $reserveAmount): void
+    private function assertEnoughAvailableBonuses(Client $client, int $reserveAmount, OrderSource $source): void
     {
+        if ($source === OrderSource::Admin) {
+            return;
+        }
+
         $availableBonuses = (int) $client->bonus_balance - (int) $client->bonus_reserved;
 
         if ($reserveAmount > $availableBonuses) {
