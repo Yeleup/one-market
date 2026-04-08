@@ -17,12 +17,24 @@ trait HasOrderHeaderActions
     protected function getOrderHeaderActions(): array
     {
         return [
+            $this->makeDownloadPdfAction(),
             $this->makeMoveToProcessingAction(),
             $this->makeMoveToDeliveredAction(),
             $this->makeCancelOrderAction(),
             OrderResource::makeDeleteAction()
                 ->successRedirectUrl(OrderResource::getUrl('index')),
         ];
+    }
+
+    protected function makeDownloadPdfAction(): Action
+    {
+        return Action::make('downloadOrderPdf')
+            ->label('PDF')
+            ->color('success')
+            ->icon('heroicon-o-document-arrow-down')
+            ->visible(fn (): bool => $this->getRecord()->status === OrderStatus::Processing)
+            ->url(fn (): string => route('orders.pdf', $this->getRecord()))
+            ->openUrlInNewTab();
     }
 
     protected function makeMoveToProcessingAction(): Action
