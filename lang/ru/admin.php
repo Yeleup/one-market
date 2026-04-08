@@ -97,6 +97,12 @@ return [
             'navigation_label' => 'Клиенты',
             'model_label' => 'клиент',
             'plural_model_label' => 'клиенты',
+            'tabs' => [
+                'label' => 'Данные клиента',
+                'main' => 'Основное',
+                'recipient' => 'Получатель',
+                'bonuses' => 'Бонусы',
+            ],
         ],
         'institution' => [
             'navigation_label' => 'Учреждения',

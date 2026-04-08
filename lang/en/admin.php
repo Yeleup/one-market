@@ -97,6 +97,12 @@ return [
             'navigation_label' => 'Clients',
             'model_label' => 'client',
             'plural_model_label' => 'clients',
+            'tabs' => [
+                'label' => 'Client details',
+                'main' => 'Main',
+                'recipient' => 'Recipient',
+                'bonuses' => 'Bonuses',
+            ],
         ],
         'institution' => [
             'navigation_label' => 'Institutions',

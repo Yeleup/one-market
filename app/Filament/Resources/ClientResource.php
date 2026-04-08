@@ -17,6 +17,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
@@ -111,73 +113,90 @@ class ClientResource extends Resource
     {
         return $schema
             ->components([
-                TextInput::make('first_name')
-                    ->label(__('admin.common.fields.first_name'))
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('last_name')
-                    ->label(__('admin.common.fields.last_name'))
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('bin')
-                    ->label(__('admin.common.fields.bin'))
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255),
-                TextInput::make('login')
-                    ->label(__('admin.common.fields.login'))
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255),
-                Select::make('institution_id')
-                    ->label(__('admin.common.fields.institution'))
-                    ->relationship(name: 'institution', titleAttribute: 'id')
-                    ->searchable()
-                    ->preload(),
-                Select::make('recipient_type')
-                    ->label(__('admin.common.fields.recipient_type'))
-                    ->options(RecipientType::class)
-                    ->default(RecipientType::Client->value)
-                    ->live()
-                    ->required(),
-                TextInput::make('recipient_first_name')
-                    ->label(__('admin.common.fields.recipient_first_name'))
-                    ->requiredIf('recipient_type', RecipientType::Other->value)
-                    ->hidden(fn (Get $get): bool => ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other))
-                    ->maxLength(255),
-                TextInput::make('recipient_last_name')
-                    ->label(__('admin.common.fields.recipient_last_name'))
-                    ->requiredIf('recipient_type', RecipientType::Other->value)
-                    ->hidden(fn (Get $get): bool => ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other))
-                    ->maxLength(255),
-                TextInput::make('recipient_bin')
-                    ->label(__('admin.common.fields.recipient_bin'))
-                    ->requiredIf('recipient_type', RecipientType::Other->value)
-                    ->hidden(fn (Get $get): bool => ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other))
-                    ->maxLength(255),
-                TextInput::make('password')
-                    ->label(__('admin.common.fields.password'))
-                    ->password()
-                    ->required(fn (string $operation): bool => $operation === 'create')
-                    ->dehydrated(fn (?string $state): bool => filled($state))
-                    ->maxLength(255),
-                TextInput::make('bonus_balance')
-                    ->label(__('admin.common.fields.bonus_balance'))
-                    ->numeric()
-                    ->disabled()
-                    ->dehydrated(false),
-                TextInput::make('bonus_reserved')
-                    ->label(__('admin.common.fields.bonus_reserved'))
-                    ->numeric()
-                    ->disabled()
-                    ->dehydrated(false),
-                Placeholder::make('available_bonus')
-                    ->label(__('admin.common.fields.available_bonus'))
-                    ->content(fn (?Client $record): int => max(0, ($record?->bonus_balance ?? 0) - ($record?->bonus_reserved ?? 0))),
-                Toggle::make('is_active')
-                    ->label(__('admin.common.fields.is_active'))
-                    ->default(true),
-            ]);
+                Tabs::make(__('admin.resources.client.tabs.label'))
+                    ->tabs([
+                        Tab::make(__('admin.resources.client.tabs.main'))
+                            ->schema([
+                                TextInput::make('first_name')
+                                    ->label(__('admin.common.fields.first_name'))
+                                    ->required()
+                                    ->maxLength(255),
+                                TextInput::make('last_name')
+                                    ->label(__('admin.common.fields.last_name'))
+                                    ->required()
+                                    ->maxLength(255),
+                                TextInput::make('bin')
+                                    ->label(__('admin.common.fields.bin'))
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(255),
+                                TextInput::make('login')
+                                    ->label(__('admin.common.fields.login'))
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(255),
+                                TextInput::make('password')
+                                    ->label(__('admin.common.fields.password'))
+                                    ->password()
+                                    ->required(fn (string $operation): bool => $operation === 'create')
+                                    ->dehydrated(fn (?string $state): bool => filled($state))
+                                    ->maxLength(255),
+                                Select::make('institution_id')
+                                    ->label(__('admin.common.fields.institution'))
+                                    ->relationship(name: 'institution', titleAttribute: 'id')
+                                    ->searchable()
+                                    ->preload(),
+                                Toggle::make('is_active')
+                                    ->label(__('admin.common.fields.is_active'))
+                                    ->default(true),
+                            ])
+                            ->columns(2),
+                        Tab::make(__('admin.resources.client.tabs.recipient'))
+                            ->schema([
+                                Select::make('recipient_type')
+                                    ->label(__('admin.common.fields.recipient_type'))
+                                    ->options(RecipientType::class)
+                                    ->default(RecipientType::Client->value)
+                                    ->live()
+                                    ->required(),
+                                TextInput::make('recipient_first_name')
+                                    ->label(__('admin.common.fields.recipient_first_name'))
+                                    ->requiredIf('recipient_type', RecipientType::Other->value)
+                                    ->hidden(fn (Get $get): bool => ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other))
+                                    ->maxLength(255),
+                                TextInput::make('recipient_last_name')
+                                    ->label(__('admin.common.fields.recipient_last_name'))
+                                    ->requiredIf('recipient_type', RecipientType::Other->value)
+                                    ->hidden(fn (Get $get): bool => ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other))
+                                    ->maxLength(255),
+                                TextInput::make('recipient_bin')
+                                    ->label(__('admin.common.fields.recipient_bin'))
+                                    ->requiredIf('recipient_type', RecipientType::Other->value)
+                                    ->hidden(fn (Get $get): bool => ! static::recipientTypeMatches($get('recipient_type'), RecipientType::Other))
+                                    ->maxLength(255),
+                            ])
+                            ->columns(2),
+                        Tab::make(__('admin.resources.client.tabs.bonuses'))
+                            ->schema([
+                                TextInput::make('bonus_balance')
+                                    ->label(__('admin.common.fields.bonus_balance'))
+                                    ->numeric()
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                TextInput::make('bonus_reserved')
+                                    ->label(__('admin.common.fields.bonus_reserved'))
+                                    ->numeric()
+                                    ->disabled()
+                                    ->dehydrated(false),
+                                Placeholder::make('available_bonus')
+                                    ->label(__('admin.common.fields.available_bonus'))
+                                    ->content(fn (?Client $record): int => max(0, ($record?->bonus_balance ?? 0) - ($record?->bonus_reserved ?? 0))),
+                            ])
+                            ->columns(2),
+                    ])
+                    ->columnSpanFull(),
+            ])
+            ->columns(2);
     }
 
     public static function table(Table $table): Table

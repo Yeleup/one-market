@@ -97,6 +97,12 @@ return [
             'navigation_label' => 'Клиенттер',
             'model_label' => 'клиент',
             'plural_model_label' => 'клиенттер',
+            'tabs' => [
+                'label' => 'Клиент деректері',
+                'main' => 'Негізгі',
+                'recipient' => 'Алушы',
+                'bonuses' => 'Бонустар',
+            ],
         ],
         'institution' => [
             'navigation_label' => 'Мекемелер',
