@@ -12,7 +12,7 @@ cmd ?= about
 service ?= app
 test_args ?= --compact
 
-.PHONY: help key-show up start rebuild down logs ps artisan composer shell migrate test queue-restart npm-install \
+.PHONY: help key-show ensure-vendor up start rebuild down logs ps artisan composer shell migrate test queue-restart npm-install \
 	prod-up prod-start prod-down prod-logs prod-ps prod-artisan prod-shell \
 	prod-migrate prod-queue-restart prod-deploy
 
@@ -20,6 +20,7 @@ help:
 	@printf '%s\n' \
 		'make up                  # local: build and start the full stack' \
 		'make key-show            # print a generated APP_KEY without starting the stack' \
+		'make ensure-vendor       # local: install composer deps if vendor is missing' \
 		'make start               # local: start without rebuild' \
 		'make rebuild             # local: rebuild and force recreate containers' \
 		'make down                # local: stop the stack' \
@@ -44,13 +45,19 @@ help:
 key-show:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) run --rm --no-deps --entrypoint php app artisan key:generate --show
 
-up:
+ensure-vendor:
+	@if [ ! -f vendor/autoload.php ]; then \
+		echo 'vendor/autoload.php is missing. Installing Composer dependencies...'; \
+		$(LOAD_ENV) $(LOCAL_COMPOSE) run --rm --entrypoint sh app -lc 'composer install --no-interaction --prefer-dist --no-progress'; \
+	fi
+
+up: ensure-vendor
 	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --build --remove-orphans
 
-start:
+start: ensure-vendor
 	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --remove-orphans
 
-rebuild:
+rebuild: ensure-vendor
 	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --build --force-recreate --remove-orphans
 
 down:

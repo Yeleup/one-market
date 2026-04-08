@@ -10,7 +10,6 @@ x-local-php-service: &local-php-service
     <<: *local-php-environment
   volumes:
     - .:/var/www/html
-    - vendor:/var/www/html/vendor
     - ./storage/app/public:/var/www/html/storage/app/public
     - ./docker/app/php.local.ini:/usr/local/etc/php/conf.d/zz-local.ini:ro
 
@@ -61,5 +60,4 @@ services:
       - node-modules:/var/www/html/node_modules
 
 volumes:
-  vendor:
   node-modules:
