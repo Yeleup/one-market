@@ -40,7 +40,7 @@ class OrdersRelationManager extends RelationManager
                 SelectFilter::make('recipient_type')
                     ->options(RecipientType::class),
             ])
-            ->recordUrl(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(fn (Order $record): string => OrderResource::getUrl('edit', ['record' => $record]))
             ->defaultSort('id', 'desc');
     }
 }

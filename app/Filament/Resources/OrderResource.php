@@ -15,7 +15,6 @@ use App\Models\Order;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -334,10 +333,10 @@ class OrderResource extends Resource
                     ->options(OrderSource::class),
             ])
             ->recordActions([
-                ViewAction::make(),
                 EditAction::make(),
                 static::makeDeleteAction(),
-            ]);
+            ])
+            ->recordUrl(fn (Order $record): string => static::getUrl('edit', ['record' => $record]));
     }
 
     public static function makeDeleteAction(): DeleteAction
@@ -368,7 +367,6 @@ class OrderResource extends Resource
         return [
             'index' => Pages\ListOrders::route('/'),
             'create' => Pages\CreateOrder::route('/create'),
-            'view' => Pages\ViewOrder::route('/{record}'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
     }
