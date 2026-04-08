@@ -74,10 +74,6 @@ class ItemsRelationManager extends RelationManager
                     ->label(__('admin.common.fields.product_name'))
                     ->required()
                     ->maxLength(255),
-                TextInput::make('product_image')
-                    ->label(__('admin.common.fields.product_image'))
-                    ->maxLength(255)
-                    ->columnSpanFull(),
                 TextInput::make('price_bonus')
                     ->label(__('admin.common.fields.price_bonus'))
                     ->numeric()
@@ -113,7 +109,7 @@ class ItemsRelationManager extends RelationManager
                     ->dehydrated(false)
                     ->suffix('g'),
             ])
-            ->columns(2);
+            ->columns();
     }
 
     public function table(Table $table): Table
