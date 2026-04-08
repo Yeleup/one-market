@@ -8,4 +8,11 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateLanguage extends CreateRecord
 {
     protected static string $resource = LanguageResource::class;
+
+    protected static bool $canCreateAnother = false;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

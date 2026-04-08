@@ -16,6 +16,8 @@ class CreateOrder extends CreateRecord
 {
     protected static string $resource = OrderResource::class;
 
+    protected static bool $canCreateAnother = false;
+
     protected ?bool $hasDatabaseTransactions = true;
 
     /**

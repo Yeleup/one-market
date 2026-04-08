@@ -21,6 +21,11 @@ class EditClient extends EditRecord
         return ClientResource::normalizeRecipientData($data);
     }
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function getHeaderActions(): array
     {
         return $this->getClientHeaderActions();
