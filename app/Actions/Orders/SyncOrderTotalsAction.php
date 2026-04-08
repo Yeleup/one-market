@@ -74,14 +74,14 @@ class SyncOrderTotalsAction
             $availableBonusBalance = (int) $client->bonus_balance - (int) $client->bonus_reserved;
 
             if ($reserveDelta > $availableBonusBalance) {
-                throw new RuntimeException('Недостаточно доступных бонусов для обновления состава заказа.');
+                throw new RuntimeException(__('admin.actions.order.sync.errors.insufficient_available_bonuses'));
             }
         }
 
         $updatedReservedBalance = (int) $client->bonus_reserved + $reserveDelta;
 
         if ($updatedReservedBalance < 0) {
-            throw new RuntimeException('Некорректный пересчёт резерва бонусов клиента.');
+            throw new RuntimeException(__('admin.actions.order.sync.errors.invalid_reserved_bonus_recalculation'));
         }
 
         $client->update([
@@ -95,7 +95,7 @@ class SyncOrderTotalsAction
             'amount' => abs($reserveDelta),
             'balance_delta' => 0,
             'reserved_delta' => $reserveDelta,
-            'comment' => 'Автоматическая корректировка резерва после изменения позиций заказа.',
+            'comment' => __('admin.actions.order.sync.comments.reserve_adjusted_after_item_change'),
         ]);
     }
 }

@@ -199,6 +199,15 @@ return [
                 'failed' => 'Could not change order status.',
                 'processing' => 'Order status changed to "Processing".',
             ],
+            'sync' => [
+                'comments' => [
+                    'reserve_adjusted_after_item_change' => 'Automatic reserve adjustment after order item changes.',
+                ],
+                'errors' => [
+                    'insufficient_available_bonuses' => 'Not enough available bonuses to update the order items.',
+                    'invalid_reserved_bonus_recalculation' => 'Invalid client bonus reserve recalculation.',
+                ],
+            ],
         ],
         'user' => [
             'reset_password' => 'Reset password',

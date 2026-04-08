@@ -6,11 +6,13 @@ use App\Actions\Orders\SyncOrderTotalsAction;
 use App\Enums\OrderStatus;
 use App\Models\OrderItem;
 use App\Models\Product;
+use Closure;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -21,6 +23,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class ItemsRelationManager extends RelationManager
 {
@@ -141,16 +144,18 @@ class ItemsRelationManager extends RelationManager
         return CreateAction::make()
             ->hidden(fn (): bool => ! $this->canManageItems())
             ->mutateDataUsing(fn (array $data): array => $this->normalizeItemData($data))
-            ->using(function (array $data): OrderItem {
+            ->using(function (CreateAction $action, array $data): OrderItem {
                 /** @var OrderItem $item */
-                $item = DB::transaction(function () use ($data): OrderItem {
+                $item = $this->runItemMutation($action, function () use ($data): OrderItem {
                     $item = new OrderItem($data);
 
-                    $this->getOwnerRecord()->items()->save($item);
+                    return DB::transaction(function () use ($item): OrderItem {
+                        $this->getOwnerRecord()->items()->save($item);
 
-                    app(SyncOrderTotalsAction::class)->handle($this->getOwnerRecord(), auth()->id());
+                        app(SyncOrderTotalsAction::class)->handle($this->getOwnerRecord(), auth()->id());
 
-                    return $item;
+                        return $item;
+                    });
                 });
 
                 return $item;
@@ -162,14 +167,16 @@ class ItemsRelationManager extends RelationManager
         return EditAction::make()
             ->hidden(fn (): bool => ! $this->canManageItems())
             ->mutateDataUsing(fn (array $data): array => $this->normalizeItemData($data))
-            ->using(function (OrderItem $record, array $data): OrderItem {
+            ->using(function (EditAction $action, OrderItem $record, array $data): OrderItem {
                 /** @var OrderItem $item */
-                $item = DB::transaction(function () use ($record, $data): OrderItem {
-                    $record->update($data);
+                $item = $this->runItemMutation($action, function () use ($record, $data): OrderItem {
+                    return DB::transaction(function () use ($record, $data): OrderItem {
+                        $record->update($data);
 
-                    app(SyncOrderTotalsAction::class)->handle($this->getOwnerRecord(), auth()->id());
+                        app(SyncOrderTotalsAction::class)->handle($this->getOwnerRecord(), auth()->id());
 
-                    return $record->fresh();
+                        return $record->fresh();
+                    });
                 });
 
                 return $item;
@@ -180,17 +187,40 @@ class ItemsRelationManager extends RelationManager
     {
         return DeleteAction::make()
             ->hidden(fn (): bool => ! $this->canManageItems())
-            ->using(function (OrderItem $record): bool {
-                return DB::transaction(function () use ($record): bool {
-                    $result = (bool) $record->delete();
+            ->using(function (DeleteAction $action, OrderItem $record): bool {
+                return $this->runItemMutation($action, function () use ($record): bool {
+                    return DB::transaction(function () use ($record): bool {
+                        $result = (bool) $record->delete();
 
-                    if ($result) {
-                        app(SyncOrderTotalsAction::class)->handle($this->getOwnerRecord(), auth()->id());
-                    }
+                        if ($result) {
+                            app(SyncOrderTotalsAction::class)->handle($this->getOwnerRecord(), auth()->id());
+                        }
 
-                    return $result;
+                        return $result;
+                    });
                 });
             });
+    }
+
+    /**
+     * @template TMutationResult
+     *
+     * @param  Closure(): TMutationResult  $callback
+     * @return TMutationResult
+     */
+    private function runItemMutation(CreateAction|EditAction|DeleteAction $action, Closure $callback): mixed
+    {
+        try {
+            return $callback();
+        } catch (RuntimeException $exception) {
+            Notification::make()
+                ->danger()
+                ->title(__('admin.actions.order.notifications.failed'))
+                ->body($exception->getMessage())
+                ->send();
+
+            $action->halt();
+        }
     }
 
     /**
