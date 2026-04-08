@@ -3,12 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Concerns\HasTranslationTabs;
-use App\Filament\Forms\Components\TranslatableRelationshipSelect;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Category;
 use App\Models\Language;
 use App\Models\Product;
 use BackedEnum;
+use CodeWithDennis\FilamentSelectTree\SelectTree;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -77,18 +77,23 @@ class ProductResource extends Resource
                     ->tabs([
                         Tab::make(__('admin.resources.product.tabs.main'))
                             ->schema([
-                                TranslatableRelationshipSelect::make('category_id')
+                                SelectTree::make('category_id')
                                     ->label(__('admin.common.fields.category'))
-                                    ->translatableRelationship('category')
-                                    ->fallbackLabelUsing(
-                                        fn (Category $record): string => sprintf(
-                                            '%s #%d',
-                                            __('admin.resources.category.model_label'),
-                                            $record->getKey(),
-                                        ),
+                                    ->relationship(
+                                        relationship: 'category',
+                                        titleAttribute: 'localized_name',
+                                        parentAttribute: 'parent_id',
+                                        modifyQueryUsing: fn (Builder $query): Builder => $query
+                                            ->withLocalizedName()
+                                            ->ordered(),
+                                        modifyChildQueryUsing: fn (Builder $query): Builder => $query
+                                            ->withLocalizedName()
+                                            ->ordered(),
                                     )
+                                    ->searchable()
+                                    ->defaultOpenLevel(2)
                                     ->required()
-                                    ->preload(),
+                                    ->enableBranchNode(),
                                 TextInput::make('bonus_price')
                                     ->label(__('admin.common.fields.bonus_price'))
                                     ->numeric()
