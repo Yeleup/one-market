@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Language;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
@@ -19,6 +20,9 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Openplain\FilamentTreeView\Fields\IconField;
+use Openplain\FilamentTreeView\Fields\TextField;
+use Openplain\FilamentTreeView\Tree;
 use UnitEnum;
 
 class CategoryResource extends Resource
@@ -82,6 +86,10 @@ class CategoryResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->maxLength(255)
                     ->helperText(__('admin.resources.category.fields.slug_helper')),
+                TextInput::make('sort_order')
+                    ->label(__('admin.common.fields.sort_order'))
+                    ->numeric()
+                    ->default(0),
                 Toggle::make('is_active')
                     ->label(__('admin.common.fields.is_active'))
                     ->default(true),
@@ -109,11 +117,12 @@ class CategoryResource extends Resource
                 TextColumn::make('parent.localized_name')
                     ->label(__('admin.common.fields.parent_category')),
                 TextColumn::make('slug')->label(__('admin.common.fields.slug'))->searchable(),
+                TextColumn::make('sort_order')->label(__('admin.common.fields.sort_order'))->sortable(),
                 IconColumn::make('is_active')->label(__('admin.common.fields.is_active'))->boolean(),
                 TextColumn::make('products_count')->counts('products')->label(__('admin.resources.category.fields.products_count')),
                 TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->since()->sortable(),
             ])
-            ->defaultSort('id', 'desc')
+            ->defaultSort('sort_order')
             ->recordActions([
                 EditAction::make(),
             ])
@@ -124,9 +133,24 @@ class CategoryResource extends Resource
             ]);
     }
 
+    public static function tree(Tree $tree): Tree
+    {
+        return $tree
+            ->fields([
+                TextField::make('localized_name'),
+                TextField::make('slug')->dimWhenInactive(),
+                IconField::make('is_active'),
+            ])
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+            ]);
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->ordered()
             ->withLocalizedName()
             ->with([
                 'parent' => fn ($query) => $query->withLocalizedName(),
@@ -141,7 +165,7 @@ class CategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCategories::route('/'),
+            'index' => Pages\TreeCategories::route('/'),
             'create' => Pages\CreateCategory::route('/create'),
             'edit' => Pages\EditCategory::route('/{record}/edit'),
         ];

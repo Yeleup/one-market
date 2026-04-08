@@ -7,7 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('stores parent categories and nulls the parent_id when the parent is deleted', function (): void {
+it('stores parent categories and cascades deletion to subcategories', function (): void {
     $parentCategory = Category::factory()->create();
     $subcategory = Category::factory()
         ->for($parentCategory, 'parent')
@@ -19,7 +19,7 @@ it('stores parent categories and nulls the parent_id when the parent is deleted'
 
     $parentCategory->delete();
 
-    expect($subcategory->fresh()?->parent_id)->toBeNull();
+    $this->assertModelMissing($subcategory);
 });
 
 it('loads the localized parent through the category resource query', function (): void {
@@ -39,4 +39,23 @@ it('loads the localized parent through the category resource query', function ()
 
     expect($category->relationLoaded('parent'))->toBeTrue();
     expect($category->parent?->localized_name)->toBe('Books');
+});
+
+it('uses sort_order for categories with a default value of zero', function (): void {
+    $laterCategory = Category::factory()->create(['sort_order' => 20]);
+    $earlierCategory = Category::factory()->create(['sort_order' => 10]);
+    $defaultOrderCategory = Category::factory()->create();
+
+    expect($defaultOrderCategory->sort_order)->toBe(0);
+    expect($defaultOrderCategory->getOrderKeyName())->toBe('sort_order');
+
+    $orderedIds = CategoryResource::getEloquentQuery()
+        ->pluck('categories.id')
+        ->all();
+
+    expect($orderedIds)->toBe([
+        $defaultOrderCategory->getKey(),
+        $earlierCategory->getKey(),
+        $laterCategory->getKey(),
+    ]);
 });

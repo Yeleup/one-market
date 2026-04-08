@@ -17,6 +17,7 @@ class CategoryFactory extends Factory
     {
         return [
             'slug' => fake()->unique()->slug(),
+            'sort_order' => 0,
             'is_active' => true,
         ];
     }
