@@ -189,7 +189,7 @@ class ClientResource extends Resource
                                     ->dehydrated(false),
                                 Placeholder::make('available_bonus')
                                     ->label(__('admin.common.fields.available_bonus'))
-                                    ->content(fn (?Client $record): int => max(0, ($record?->bonus_balance ?? 0) - ($record?->bonus_reserved ?? 0))),
+                                    ->content(fn (Get $get): int => max(0, ((int) ($get('bonus_balance') ?? 0)) - ((int) ($get('bonus_reserved') ?? 0)))),
                             ])
                             ->columns(2),
                     ])

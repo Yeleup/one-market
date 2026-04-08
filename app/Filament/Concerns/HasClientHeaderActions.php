@@ -60,7 +60,8 @@ trait HasClientHeaderActions
                     return;
                 }
 
-                $this->refreshRecordState();
+                $this->refreshRecordState(['bonus_balance', 'bonus_reserved']);
+                $this->dispatch('client-bonus-transactions-updated');
 
                 Notification::make()
                     ->success()
@@ -103,7 +104,8 @@ trait HasClientHeaderActions
                     return;
                 }
 
-                $this->refreshRecordState();
+                $this->refreshRecordState(['bonus_balance', 'bonus_reserved']);
+                $this->dispatch('client-bonus-transactions-updated');
 
                 Notification::make()
                     ->success()
@@ -151,7 +153,7 @@ trait HasClientHeaderActions
                     'is_active' => ! $this->getRecord()->is_active,
                 ]);
 
-                $this->refreshRecordState();
+                $this->refreshRecordState(['is_active']);
 
                 Notification::make()
                     ->success()
@@ -160,11 +162,20 @@ trait HasClientHeaderActions
             });
     }
 
-    protected function refreshRecordState(): void
+    /**
+     * @param  array<string>  $statePaths
+     */
+    protected function refreshRecordState(array $statePaths = []): void
     {
         $this->record = $this->getRecord()->fresh();
 
-        if (method_exists($this, 'fillForm')) {
+        if ($statePaths !== [] && method_exists($this, 'refreshFormData')) {
+            $this->refreshFormData($statePaths);
+
+            return;
+        }
+
+        if ($statePaths !== [] && method_exists($this, 'fillForm')) {
             $this->fillForm();
         }
     }

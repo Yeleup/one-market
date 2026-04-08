@@ -8,10 +8,17 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Livewire\Attributes\On;
 
 class BonusTransactionsRelationManager extends RelationManager
 {
     protected static string $relationship = 'bonusTransactions';
+
+    #[On('client-bonus-transactions-updated')]
+    public function refreshBonusTransactionsTable(): void
+    {
+        $this->resetTable();
+    }
 
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
