@@ -18,6 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class InstitutionResource extends Resource
@@ -94,7 +95,11 @@ class InstitutionResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
-                TextColumn::make('translations.name')->label(__('admin.common.fields.name'))->searchable(),
+                TextColumn::make('localized_name')
+                    ->label(__('admin.common.fields.name'))
+                    ->searchable(
+                        query: fn (Builder $query, string $search): Builder => $query->searchLocalizedName($search),
+                    ),
                 TextColumn::make('max_weight_grams')->label(__('admin.common.fields.max_weight'))->suffix(' g')->sortable(),
                 IconColumn::make('is_active')->label(__('admin.common.fields.is_active'))->boolean(),
                 TextColumn::make('created_at')->label(__('admin.common.fields.created_at'))->dateTime()->sortable(),
@@ -108,6 +113,11 @@ class InstitutionResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withLocalizedName();
     }
 
     public static function getRelations(): array

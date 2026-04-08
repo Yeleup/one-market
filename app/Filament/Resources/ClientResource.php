@@ -3,10 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Enums\RecipientType;
+use App\Filament\Forms\Components\TranslatableRelationshipSelect;
 use App\Filament\Resources\ClientResource\Pages;
 use App\Filament\Resources\ClientResource\RelationManagers\BonusTransactionsRelationManager;
 use App\Filament\Resources\ClientResource\RelationManagers\OrdersRelationManager;
 use App\Models\Client;
+use App\Models\Institution;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -23,6 +25,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 use UnitEnum;
 
@@ -140,10 +143,16 @@ class ClientResource extends Resource
                                     ->required(fn (string $operation): bool => $operation === 'create')
                                     ->dehydrated(fn (?string $state): bool => filled($state))
                                     ->maxLength(255),
-                                Select::make('institution_id')
+                                TranslatableRelationshipSelect::make('institution_id')
                                     ->label(__('admin.common.fields.institution'))
-                                    ->relationship(name: 'institution', titleAttribute: 'id')
-                                    ->searchable()
+                                    ->translatableRelationship('institution')
+                                    ->fallbackLabelUsing(
+                                        fn (Institution $record): string => sprintf(
+                                            '%s #%d',
+                                            __('admin.resources.institution.model_label'),
+                                            $record->getKey(),
+                                        ),
+                                    )
                                     ->preload(),
                                 Toggle::make('is_active')
                                     ->label(__('admin.common.fields.is_active'))
@@ -208,7 +217,7 @@ class ClientResource extends Resource
                     ->searchable(['first_name', 'last_name']),
                 TextColumn::make('bin')->label(__('admin.common.fields.bin'))->searchable(),
                 TextColumn::make('login')->label(__('admin.common.fields.login'))->searchable(),
-                TextColumn::make('institution.id')->label(__('admin.common.fields.institution')),
+                TextColumn::make('institution.localized_name')->label(__('admin.common.fields.institution')),
                 TextColumn::make('recipient_type')->label(__('admin.common.fields.recipient_type'))->badge(),
                 TextColumn::make('recipient_full_name')->label(__('admin.common.fields.recipient')),
                 TextColumn::make('bonus_balance')->label(__('admin.common.fields.bonus_balance'))->sortable(),
@@ -229,6 +238,14 @@ class ClientResource extends Resource
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
+            ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'institution' => fn ($query) => $query->withLocalizedName(),
             ]);
     }
 

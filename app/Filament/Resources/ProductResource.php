@@ -3,7 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Concerns\HasTranslationTabs;
+use App\Filament\Forms\Components\TranslatableRelationshipSelect;
 use App\Filament\Resources\ProductResource\Pages;
+use App\Models\Category;
 use App\Models\Language;
 use App\Models\Product;
 use BackedEnum;
@@ -13,7 +15,6 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
@@ -25,6 +26,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class ProductResource extends Resource
@@ -75,11 +77,17 @@ class ProductResource extends Resource
                     ->tabs([
                         Tab::make(__('admin.resources.product.tabs.main'))
                             ->schema([
-                                Select::make('category_id')
+                                TranslatableRelationshipSelect::make('category_id')
                                     ->label(__('admin.common.fields.category'))
-                                    ->relationship(name: 'category', titleAttribute: 'id')
+                                    ->translatableRelationship('category')
+                                    ->fallbackLabelUsing(
+                                        fn (Category $record): string => sprintf(
+                                            '%s #%d',
+                                            __('admin.resources.category.model_label'),
+                                            $record->getKey(),
+                                        ),
+                                    )
                                     ->required()
-                                    ->searchable()
                                     ->preload(),
                                 TextInput::make('bonus_price')
                                     ->label(__('admin.common.fields.bonus_price'))
@@ -154,9 +162,13 @@ class ProductResource extends Resource
             ->columns([
                 TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
                 ImageColumn::make('image')->label(__('admin.common.fields.image')),
-                TextColumn::make('translations.name')->label(__('admin.common.fields.name'))->searchable(),
+                TextColumn::make('localized_name')
+                    ->label(__('admin.common.fields.name'))
+                    ->searchable(
+                        query: fn (Builder $query, string $search): Builder => $query->searchLocalizedName($search),
+                    ),
                 TextColumn::make('slug')->label(__('admin.common.fields.slug'))->searchable(),
-                TextColumn::make('category.translations.name')->label(__('admin.common.fields.category')),
+                TextColumn::make('category.localized_name')->label(__('admin.common.fields.category')),
                 TextColumn::make('bonus_price')->label(__('admin.common.fields.bonus_price'))->sortable(),
                 TextColumn::make('weight_grams')->label(__('admin.common.fields.weight'))->suffix(' g')->sortable(),
                 TextColumn::make('stock_quantity')->label(__('admin.common.fields.stock_quantity'))->sortable(),
@@ -165,8 +177,17 @@ class ProductResource extends Resource
             ])
             ->defaultSort('id', 'desc')
             ->filters([
-                SelectFilter::make('category')
-                    ->relationship('category', 'id'),
+                SelectFilter::make('category_id')
+                    ->label(__('admin.common.fields.category'))
+                    ->options(fn (): array => Category::query()
+                        ->withLocalizedName()
+                        ->orderBy('localized_name')
+                        ->get()
+                        ->mapWithKeys(fn (Category $category): array => [
+                            $category->getKey() => $category->localized_name
+                                ?? sprintf('%s #%d', __('admin.resources.category.model_label'), $category->getKey()),
+                        ])
+                        ->all()),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -175,6 +196,15 @@ class ProductResource extends Resource
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
+            ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withLocalizedName()
+            ->with([
+                'category' => fn ($query) => $query->withLocalizedName(),
             ]);
     }
 

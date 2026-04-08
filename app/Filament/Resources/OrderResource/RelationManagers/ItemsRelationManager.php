@@ -43,13 +43,15 @@ class ItemsRelationManager extends RelationManager
                     ->relationship(
                         name: 'product',
                         titleAttribute: 'id',
-                        modifyQueryUsing: fn (Builder $query) => $query->with(['translations', 'images']),
+                        modifyQueryUsing: fn (Builder $query): Builder => $query
+                            ->withLocalizedName()
+                            ->with('images'),
                     )
                     ->getOptionLabelFromRecordUsing(
                         fn (Product $record): string => sprintf(
                             '#%d %s',
                             $record->getKey(),
-                            $record->translations->first()?->name ?? __('admin.common.messages.untitled'),
+                            $record->localized_name ?? __('admin.common.messages.untitled'),
                         ),
                     )
                     ->searchable(['id'])
@@ -63,7 +65,7 @@ class ItemsRelationManager extends RelationManager
                             return;
                         }
 
-                        $set('product_name', $product->translations->first()?->name ?? sprintf('%s #%d', __('admin.resources.product.model_label'), $product->getKey()));
+                        $set('product_name', $product->localized_name ?? sprintf('%s #%d', __('admin.resources.product.model_label'), $product->getKey()));
                         $set('product_image', $product->image ?: $product->images->sortBy('sort_order')->first()?->image);
                         $set('price_bonus', $product->bonus_price);
                         $set('weight_grams', $product->weight_grams);
@@ -237,7 +239,7 @@ class ItemsRelationManager extends RelationManager
             'weight_grams' => $weightGrams,
             'product_name' => filled($data['product_name'] ?? null)
                 ? $data['product_name']
-                : ($product?->translations->first()?->name ?? sprintf('%s #%d', __('admin.resources.product.model_label'), $data['product_id'])),
+                : ($product?->localized_name ?? sprintf('%s #%d', __('admin.resources.product.model_label'), $data['product_id'])),
             'product_image' => filled($data['product_image'] ?? null)
                 ? $data['product_image']
                 : $this->getProductDefaultImage($product),
@@ -264,7 +266,8 @@ class ItemsRelationManager extends RelationManager
     private function findProduct(int $productId): ?Product
     {
         return Product::query()
-            ->with(['translations', 'images'])
+            ->withLocalizedName()
+            ->with('images')
             ->find($productId);
     }
 

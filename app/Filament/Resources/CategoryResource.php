@@ -17,6 +17,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class CategoryResource extends Resource
@@ -88,7 +89,11 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
-                TextColumn::make('translations.name')->label(__('admin.common.fields.name'))->searchable(),
+                TextColumn::make('localized_name')
+                    ->label(__('admin.common.fields.name'))
+                    ->searchable(
+                        query: fn (Builder $query, string $search): Builder => $query->searchLocalizedName($search),
+                    ),
                 TextColumn::make('slug')->label(__('admin.common.fields.slug'))->searchable(),
                 IconColumn::make('is_active')->label(__('admin.common.fields.is_active'))->boolean(),
                 TextColumn::make('products_count')->counts('products')->label(__('admin.resources.category.fields.products_count')),
@@ -103,6 +108,11 @@ class CategoryResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withLocalizedName();
     }
 
     public static function getRelations(): array

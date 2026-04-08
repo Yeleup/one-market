@@ -6,11 +6,13 @@ use App\Actions\Orders\DeleteOrderAction;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
 use App\Enums\RecipientType;
+use App\Filament\Forms\Components\TranslatableRelationshipSelect;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers\BonusTransactionsRelationManager;
 use App\Filament\Resources\OrderResource\RelationManagers\ItemsRelationManager;
 use App\Filament\Resources\OrderResource\RelationManagers\StatusHistoriesRelationManager;
 use App\Models\Client;
+use App\Models\Institution;
 use App\Models\Order;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -27,6 +29,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class OrderResource extends Resource
@@ -73,6 +76,8 @@ class OrderResource extends Resource
                                     ->label(__('admin.common.fields.client'))
                                     ->relationship(name: 'client', titleAttribute: 'login')
                                     ->required()
+                                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                                    ->dehydrated(fn (string $operation): bool => $operation === 'create')
                                     ->searchable()
                                     ->preload()
                                     ->live()
@@ -98,11 +103,19 @@ class OrderResource extends Resource
                                         $set('recipient_last_name', $recipientType === RecipientType::Other ? $client->recipient_last_name : null);
                                         $set('recipient_bin', $recipientType === RecipientType::Other ? $client->recipient_bin : null);
                                     }),
-                                Select::make('institution_id')
+                                TranslatableRelationshipSelect::make('institution_id')
                                     ->label(__('admin.common.fields.institution'))
-                                    ->relationship(name: 'institution', titleAttribute: 'id')
+                                    ->translatableRelationship('institution')
+                                    ->fallbackLabelUsing(
+                                        fn (Institution $record): string => sprintf(
+                                            '%s #%d',
+                                            __('admin.resources.institution.model_label'),
+                                            $record->getKey(),
+                                        ),
+                                    )
                                     ->required()
-                                    ->searchable()
+                                    ->disabled(fn (string $operation): bool => $operation !== 'create')
+                                    ->dehydrated(fn (string $operation): bool => $operation === 'create')
                                     ->preload(),
                                 Select::make('source')
                                     ->label(__('admin.common.fields.source'))
@@ -317,7 +330,7 @@ class OrderResource extends Resource
                 TextColumn::make('client.login')->label(__('admin.common.fields.client'))->searchable(),
                 TextColumn::make('recipient_full_name')
                     ->label(__('admin.common.fields.recipient')),
-                TextColumn::make('institution.translations.name')->label(__('admin.common.fields.institution')),
+                TextColumn::make('institution.localized_name')->label(__('admin.common.fields.institution')),
                 TextColumn::make('source')->label(__('admin.common.fields.source'))->badge(),
                 TextColumn::make('status')->label(__('admin.common.fields.status'))->badge(),
                 TextColumn::make('total_bonus')->label(__('admin.common.fields.total_bonus'))->sortable(),
@@ -331,12 +344,31 @@ class OrderResource extends Resource
                     ->options(OrderStatus::class),
                 SelectFilter::make('source')
                     ->options(OrderSource::class),
+                SelectFilter::make('institution_id')
+                    ->label(__('admin.common.fields.institution'))
+                    ->options(fn (): array => Institution::query()
+                        ->withLocalizedName()
+                        ->orderBy('localized_name')
+                        ->get()
+                        ->mapWithKeys(fn (Institution $institution): array => [
+                            $institution->getKey() => $institution->localized_name
+                                ?? sprintf('%s #%d', __('admin.resources.institution.model_label'), $institution->getKey()),
+                        ])
+                        ->all()),
             ])
             ->recordActions([
                 EditAction::make(),
                 static::makeDeleteAction(),
             ])
             ->recordUrl(fn (Order $record): string => static::getUrl('edit', ['record' => $record]));
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'institution' => fn ($query) => $query->withLocalizedName(),
+            ]);
     }
 
     public static function makeDeleteAction(): DeleteAction

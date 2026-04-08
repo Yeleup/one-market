@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasLocalizedName;
 use Database\Factories\InstitutionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,8 @@ class Institution extends Model
 {
     /** @use HasFactory<InstitutionFactory> */
     use HasFactory;
+
+    use HasLocalizedName;
 
     /**
      * @return array<string, string>
