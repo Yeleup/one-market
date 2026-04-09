@@ -55,6 +55,7 @@ class HandleStorefrontInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
             ],
             'locale' => $this->sharedLocaleData(),
+            'routes' => $this->sharedRoutes(),
             'translations' => Lang::get('storefront'),
         ];
     }
@@ -100,6 +101,27 @@ class HandleStorefrontInertiaRequests extends Middleware
                 ])
                 ->values()
                 ->all(),
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function sharedRoutes(): array
+    {
+        return [
+            'catalog' => route('storefront.catalog', absolute: false),
+            'login' => route('storefront.login', absolute: false),
+            'register' => route('storefront.register', absolute: false),
+            'logout' => route('storefront.logout', absolute: false),
+            'language' => route('storefront.language', absolute: false),
+            'cart' => route('storefront.cart.index', absolute: false),
+            'cart_store' => route('storefront.cart.store', absolute: false),
+            'checkout' => route('storefront.checkout', absolute: false),
+            'dashboard' => route('storefront.dashboard', absolute: false),
+            'orders' => route('storefront.orders.index', absolute: false),
+            'profile' => route('storefront.profile', absolute: false),
+            'bonuses' => route('storefront.bonuses.index', absolute: false),
         ];
     }
 }

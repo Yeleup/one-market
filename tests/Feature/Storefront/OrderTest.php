@@ -14,7 +14,7 @@ it('lists only the authenticated client orders', function () {
     $otherClient = Client::factory()->create();
     $institution = Institution::factory()->create();
 
-    Order::factory()->for($client)->for($institution)->create();
+    $firstOrder = Order::factory()->for($client)->for($institution)->create();
     Order::factory()->for($client)->for($institution)->create();
     Order::factory()->for($otherClient)->for($institution)->create();
 
@@ -24,6 +24,9 @@ it('lists only the authenticated client orders', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Storefront/Orders')
             ->has('orders.data', 2)
+            ->where('orders.data', fn ($orders) => collect($orders)
+                ->pluck('url')
+                ->contains(route('storefront.orders.show', $firstOrder, false)))
         );
 });
 

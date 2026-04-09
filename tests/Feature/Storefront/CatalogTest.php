@@ -118,7 +118,7 @@ it('returns an image route url for catalog cards', function (): void {
         base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mNk+M/wHwAEAQH/cetH5QAAAABJRU5ErkJggg==')
     );
 
-    Product::factory()->create([
+    $product = Product::factory()->create([
         'is_active' => true,
         'image' => $imagePath,
     ]);
@@ -128,6 +128,7 @@ it('returns an image route url for catalog cards', function (): void {
     $response->assertOk()
         ->assertInertia(fn ($page) => $page
             ->has('products.data', 1)
+            ->where('products.data.0.url', route('storefront.products.show', $product, false))
             ->where('products.data.0.image', fn (string $url) => str_starts_with($url, '/img/') && str_contains($url, 'w=640') && str_contains($url, 'fm=webp'))
         );
 });

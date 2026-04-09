@@ -1,9 +1,10 @@
 <script>
-    import { router } from '@inertiajs/svelte';
+    import { router, usePage } from '@inertiajs/svelte';
     import { useStorefrontTranslations } from './i18n.js';
     import Layout from './Layout.svelte';
 
     let { categories, products, filters } = $props();
+    const page = usePage();
     const { t } = useStorefrontTranslations();
 
     let search = $state(filters.search ?? '');
@@ -62,7 +63,7 @@
     });
 
     function filterByCategory(categoryId) {
-        router.get('/', {
+        router.get(page.props.routes.catalog, {
             category: categoryId || undefined,
             search: search || undefined,
         }, { preserveState: true });
@@ -70,14 +71,14 @@
 
     function handleSearch(e) {
         e.preventDefault();
-        router.get('/', {
+        router.get(page.props.routes.catalog, {
             category: filters.category || undefined,
             search: search || undefined,
         }, { preserveState: true });
     }
 
     function addToCart(productId) {
-        router.post('/cart', {
+        router.post(page.props.routes.cart_store, {
             product_id: productId,
             quantity: 1,
         }, { preserveScroll: true });
@@ -157,7 +158,7 @@
         <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {#each products.data as product}
                 <div class="group overflow-hidden rounded-2xl border border-stone-200 bg-white transition-all duration-200 hover:border-stone-300 hover:shadow-md">
-                    <a href="/products/{product.id}" class="block">
+                    <a href={product.url} class="block">
                         {#if product.image}
                             <div class="aspect-square overflow-hidden bg-stone-100">
                                 <img
@@ -175,7 +176,7 @@
                         {/if}
                     </a>
                     <div class="p-3 sm:p-4">
-                        <a href="/products/{product.id}" class="block text-sm font-medium text-stone-900 transition-colors hover:text-stone-600 line-clamp-2">
+                        <a href={product.url} class="block text-sm font-medium text-stone-900 transition-colors hover:text-stone-600 line-clamp-2">
                             {product.name}
                         </a>
                         <div class="mt-2 flex items-baseline gap-2">

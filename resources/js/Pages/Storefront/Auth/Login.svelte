@@ -1,5 +1,5 @@
 <script>
-    import { useForm } from '@inertiajs/svelte';
+    import { useForm, usePage } from '@inertiajs/svelte';
     import Layout from '../Layout.svelte';
     import { useStorefrontTranslations } from '../i18n.js';
 
@@ -7,11 +7,12 @@
         bin: '',
         password: '',
     });
+    const page = usePage();
     const { t } = useStorefrontTranslations();
 
     function submit(e) {
         e.preventDefault();
-        form.post('/login');
+        form.post(page.props.routes.login);
     }
 </script>
 
@@ -68,7 +69,7 @@
 
         <p class="mt-6 text-center text-sm text-stone-500">
             {t('auth.login.no_account', 'Нет аккаунта?')}
-            <a href="/register" class="font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 transition-colors hover:decoration-stone-900">
+            <a href={page.props.routes.register} class="font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 transition-colors hover:decoration-stone-900">
                 {t('auth.login.register', 'Зарегистрироваться')}
             </a>
         </p>

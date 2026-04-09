@@ -15,7 +15,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->is('storefront/*') || $request->is('storefront')) {
+        if (str_starts_with((string) $request->route()?->getName(), 'storefront.')) {
             return $next($request);
         }
 

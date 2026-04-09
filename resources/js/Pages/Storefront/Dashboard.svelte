@@ -1,8 +1,10 @@
 <script>
+    import { usePage } from '@inertiajs/svelte';
     import Layout from './Layout.svelte';
     import { useStorefrontTranslations } from './i18n.js';
 
     let { client, recentOrders, recentTransactions } = $props();
+    const page = usePage();
     const { t } = useStorefrontTranslations();
 
     const statusColors = {
@@ -48,7 +50,7 @@
     <div class="mb-8">
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-base font-semibold text-stone-900">{t('dashboard.recent_orders', 'Последние заказы')}</h2>
-            <a href="/orders" class="text-xs font-medium text-stone-500 transition-colors hover:text-stone-900">{t('dashboard.all_orders', 'Все заказы →')}</a>
+            <a href={page.props.routes.orders} class="text-xs font-medium text-stone-500 transition-colors hover:text-stone-900">{t('dashboard.all_orders', 'Все заказы →')}</a>
         </div>
         {#if recentOrders.length === 0}
             <div class="rounded-2xl border border-stone-200 bg-white px-4 py-8 text-center text-sm text-stone-400">
@@ -70,7 +72,7 @@
                             {#each recentOrders as order}
                                 <tr class="border-t border-stone-50 transition-colors hover:bg-stone-50/50">
                                     <td class="px-4 py-3">
-                                        <a href="/orders/{order.id}" class="font-medium text-stone-900 hover:underline">{order.id}</a>
+                                        <a href={order.url} class="font-medium text-stone-900 hover:underline">{order.id}</a>
                                     </td>
                                     <td class="px-4 py-3 text-stone-500">{order.placed_at}</td>
                                     <td class="px-4 py-3">
@@ -92,7 +94,7 @@
     <div>
         <div class="mb-4 flex items-center justify-between">
             <h2 class="text-base font-semibold text-stone-900">{t('dashboard.recent_transactions', 'Последние операции')}</h2>
-            <a href="/bonuses" class="text-xs font-medium text-stone-500 transition-colors hover:text-stone-900">{t('dashboard.all_history', 'Вся история →')}</a>
+            <a href={page.props.routes.bonuses} class="text-xs font-medium text-stone-500 transition-colors hover:text-stone-900">{t('dashboard.all_history', 'Вся история →')}</a>
         </div>
         {#if recentTransactions.length === 0}
             <div class="rounded-2xl border border-stone-200 bg-white px-4 py-8 text-center text-sm text-stone-400">

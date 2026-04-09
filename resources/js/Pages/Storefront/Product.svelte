@@ -1,15 +1,16 @@
 <script>
-    import { router } from '@inertiajs/svelte';
+    import { router, usePage } from '@inertiajs/svelte';
     import Layout from './Layout.svelte';
     import { useStorefrontTranslations } from './i18n.js';
 
     let { product } = $props();
+    const page = usePage();
     let quantity = $state(1);
     const { t } = useStorefrontTranslations();
     let selectedImage = $state(product.image ?? product.images[0]?.image ?? null);
 
     function addToCart() {
-        router.post('/cart', {
+        router.post(page.props.routes.cart_store, {
             product_id: product.id,
             quantity,
         });
@@ -22,7 +23,7 @@
 
 {#snippet children()}
 <div>
-    <a href="/" class="mb-6 inline-flex items-center gap-1.5 text-sm text-stone-500 transition-colors hover:text-stone-900">
+    <a href={page.props.routes.catalog} class="mb-6 inline-flex items-center gap-1.5 text-sm text-stone-500 transition-colors hover:text-stone-900">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
         </svg>

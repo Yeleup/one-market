@@ -1,8 +1,10 @@
 <script>
+    import { usePage } from '@inertiajs/svelte';
     import Layout from './Layout.svelte';
     import { useStorefrontTranslations } from './i18n.js';
 
     let { order } = $props();
+    const page = usePage();
     const { t } = useStorefrontTranslations();
 
     const statusColors = {
@@ -19,7 +21,7 @@
 
 {#snippet children()}
 <div>
-    <a href="/orders" class="mb-6 inline-flex items-center gap-1.5 text-sm text-stone-500 transition-colors hover:text-stone-900">
+    <a href={page.props.routes.orders} class="mb-6 inline-flex items-center gap-1.5 text-sm text-stone-500 transition-colors hover:text-stone-900">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
         </svg>

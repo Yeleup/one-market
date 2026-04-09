@@ -52,6 +52,7 @@ class CatalogController extends Controller
             'products' => $products->through(fn (Product $product) => [
                 'id' => $product->id,
                 'name' => $product->localized_name,
+                'url' => route('storefront.products.show', $product, false),
                 'bonus_price' => $product->bonus_price,
                 'weight_grams' => $product->weight_grams,
                 'stock_quantity' => $product->stock_quantity,

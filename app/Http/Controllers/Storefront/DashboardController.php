@@ -30,6 +30,7 @@ class DashboardController extends Controller
                 ->get()
                 ->map(fn ($order) => [
                     'id' => $order->id,
+                    'url' => route('storefront.orders.show', $order, false),
                     'status' => $order->status->value,
                     'total_bonus' => $order->total_bonus,
                     'placed_at' => $order->placed_at?->format('d.m.Y H:i'),

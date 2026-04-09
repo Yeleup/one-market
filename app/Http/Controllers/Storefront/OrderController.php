@@ -24,6 +24,7 @@ class OrderController extends Controller
         return Inertia::render('Storefront/Orders', [
             'orders' => $orders->through(fn (Order $order) => [
                 'id' => $order->id,
+                'url' => route('storefront.orders.show', $order, false),
                 'status' => $order->status->value,
                 'total_bonus' => $order->total_bonus,
                 'total_weight_grams' => $order->total_weight_grams,
