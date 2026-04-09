@@ -78,12 +78,6 @@
 
                 <!-- Desktop nav -->
                 <nav class="hidden items-center gap-1 md:flex">
-                    <a
-                        href="/storefront"
-                        class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
-                    >
-                        {t('layout.nav.catalog', 'Каталог')}
-                    </a>
                     {#if page.props.auth?.client}
                         <a
                             href="/storefront/dashboard"
