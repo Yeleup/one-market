@@ -161,7 +161,7 @@
                         {#if product.image}
                             <div class="aspect-square overflow-hidden bg-stone-100">
                                 <img
-                                    src="/storage/{product.image}"
+                                    src={product.image}
                                     alt={product.name}
                                     class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 />

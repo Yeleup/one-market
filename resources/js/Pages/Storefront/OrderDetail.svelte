@@ -42,7 +42,7 @@
                     {#each order.items as item}
                         <div class="flex items-center gap-3 border-b border-stone-100 pb-3 last:border-0 last:pb-0">
                             {#if item.product_image}
-                                <img src="/storage/{item.product_image}" alt={item.product_name} class="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                                <img src={item.product_image} alt={item.product_name} class="h-12 w-12 shrink-0 rounded-xl object-cover" />
                             {:else}
                                 <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-xs text-stone-300">—</div>
                             {/if}

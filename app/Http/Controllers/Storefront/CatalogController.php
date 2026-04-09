@@ -43,7 +43,6 @@ class CatalogController extends Controller
             })
             ->when($request->filled('search'), fn ($q) => $q->searchLocalizedName($request->string('search')))
             ->withLocalizedName()
-            ->with(['images' => fn ($q) => $q->orderBy('sort_order')->limit(1)])
             ->latest()
             ->paginate(12)
             ->withQueryString();
@@ -56,7 +55,9 @@ class CatalogController extends Controller
                 'bonus_price' => $product->bonus_price,
                 'weight_grams' => $product->weight_grams,
                 'stock_quantity' => $product->stock_quantity,
-                'image' => $product->images->first()?->image,
+                'image' => $product->image
+                    ? route('image.show', ['path' => $product->image, 'w' => 640, 'h' => 640, 'fit' => 'crop', 'fm' => 'webp', 'q' => 82], absolute: false)
+                    : null,
             ]),
             'filters' => [
                 'category' => $categoryId ?: null,
@@ -81,10 +82,17 @@ class CatalogController extends Controller
                 'weight_grams' => $product->weight_grams,
                 'stock_quantity' => $product->stock_quantity,
                 'is_active' => $product->is_active,
-                'images' => $product->images->map(fn ($img) => [
-                    'id' => $img->id,
-                    'image' => $img->image,
-                ]),
+                'image' => $product->image
+                    ? route('image.show', ['path' => $product->image, 'w' => 1400, 'h' => 1400, 'fit' => 'crop', 'fm' => 'webp', 'q' => 84], absolute: false)
+                    : null,
+                'image_thumb' => $product->image
+                    ? route('image.show', ['path' => $product->image, 'w' => 240, 'h' => 240, 'fit' => 'crop', 'fm' => 'webp', 'q' => 80], absolute: false)
+                    : null,
+                'images' => $product->images->map(fn ($image): array => [
+                    'id' => $image->id,
+                    'image' => route('image.show', ['path' => $image->image, 'w' => 1400, 'h' => 1400, 'fit' => 'crop', 'fm' => 'webp', 'q' => 84], absolute: false),
+                    'thumb' => route('image.show', ['path' => $image->image, 'w' => 240, 'h' => 240, 'fit' => 'crop', 'fm' => 'webp', 'q' => 80], absolute: false),
+                ])->values(),
                 'category' => $product->category ? [
                     'id' => $product->category->id,
                     'name' => $product->category->localized_name,

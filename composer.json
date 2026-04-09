@@ -13,6 +13,7 @@
         "inertiajs/inertia-laravel": "^3.0",
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
+        "league/glide": "^3.2",
         "openplain/filament-tree-view": "^0.5.4"
     },
     "require-dev": {

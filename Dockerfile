@@ -1,7 +1,20 @@
 FROM php:8.4-fpm-alpine AS php-base
 
-RUN apk add --no-cache fcgi git icu-dev libzip-dev oniguruma-dev unzip wget zip \
-    && docker-php-ext-install bcmath intl mbstring opcache pcntl pdo_mysql zip
+RUN apk add --no-cache \
+        fcgi \
+        freetype-dev \
+        git \
+        icu-dev \
+        libjpeg-turbo-dev \
+        libpng-dev \
+        libwebp-dev \
+        libzip-dev \
+        oniguruma-dev \
+        unzip \
+        wget \
+        zip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install bcmath gd intl mbstring opcache pcntl pdo_mysql zip
 
 COPY docker/app/php-fpm.conf /usr/local/etc/php-fpm.d/zz-app.conf
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/zz-app.ini

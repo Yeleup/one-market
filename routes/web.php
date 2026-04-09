@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OrderPdfController;
 use App\Http\Controllers\Storefront;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,10 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('Home');
 });
+
+Route::get('/img/{path}', [ImageController::class, 'show'])
+    ->where('path', '.*')
+    ->name('image.show');
 
 Route::middleware('auth')
     ->get('/orders/{order}/pdf', OrderPdfController::class)

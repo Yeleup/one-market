@@ -23,7 +23,9 @@ class CartController extends Controller
                 'bonus_price' => $item['product']->bonus_price,
                 'weight_grams' => $item['product']->weight_grams,
                 'stock_quantity' => $item['product']->stock_quantity,
-                'image' => $item['product']->images->first()?->image,
+                'image' => $item['product']->image
+                    ? route('image.show', ['path' => $item['product']->image, 'w' => 240, 'h' => 240, 'fit' => 'crop', 'fm' => 'webp', 'q' => 80], absolute: false)
+                    : null,
                 'quantity' => $item['quantity'],
                 'line_total_bonus' => $item['line_total_bonus'],
                 'line_total_weight_grams' => $item['line_total_weight_grams'],

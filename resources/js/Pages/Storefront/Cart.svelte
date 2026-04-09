@@ -37,7 +37,7 @@
                 {#each items as item}
                     <div class="flex items-center gap-3 rounded-2xl border border-stone-200 bg-white p-3 sm:gap-4 sm:p-4">
                         {#if item.image}
-                            <img src="/storage/{item.image}" alt={item.name} class="h-16 w-16 shrink-0 rounded-xl object-cover sm:h-20 sm:w-20" />
+                            <img src={item.image} alt={item.name} class="h-16 w-16 shrink-0 rounded-xl object-cover sm:h-20 sm:w-20" />
                         {:else}
                             <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-stone-100 sm:h-20 sm:w-20">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">

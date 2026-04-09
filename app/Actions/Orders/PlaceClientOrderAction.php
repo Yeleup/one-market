@@ -67,7 +67,7 @@ class PlaceClientOrderAction
                 $orderItems[] = [
                     'product_id' => $product->id,
                     'product_name' => CurrentTranslationResolver::name($product) ?? '',
-                    'product_image' => $product->images->sortBy('sort_order')->first()?->image,
+                    'product_image' => $product->image,
                     'price_bonus' => $product->bonus_price,
                     'weight_grams' => $product->weight_grams,
                     'quantity' => $quantity,

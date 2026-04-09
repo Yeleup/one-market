@@ -63,7 +63,9 @@ class OrderController extends Controller
                 'items' => $order->items->map(fn ($item) => [
                     'id' => $item->id,
                     'product_name' => $item->product_name,
-                    'product_image' => $item->product_image,
+                    'product_image' => $item->product_image
+                        ? route('image.show', ['path' => $item->product_image, 'w' => 160, 'h' => 160, 'fit' => 'crop', 'fm' => 'webp', 'q' => 78], absolute: false)
+                        : null,
                     'price_bonus' => $item->price_bonus,
                     'weight_grams' => $item->weight_grams,
                     'quantity' => $item->quantity,

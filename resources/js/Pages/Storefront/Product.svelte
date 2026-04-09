@@ -6,12 +6,17 @@
     let { product } = $props();
     let quantity = $state(1);
     const { t } = useStorefrontTranslations();
+    let selectedImage = $state(product.image ?? product.images[0]?.image ?? null);
 
     function addToCart() {
         router.post('/storefront/cart', {
             product_id: product.id,
             quantity,
         });
+    }
+
+    function selectImage(image) {
+        selectedImage = image;
     }
 </script>
 
@@ -31,17 +36,51 @@
     <div class="flex flex-col gap-8 lg:flex-row lg:gap-12">
         <!-- Images -->
         <div class="w-full lg:w-1/2">
-            {#if product.images.length > 0}
+            {#if selectedImage}
                 <div class="space-y-3">
-                    {#each product.images as img, i}
-                        <div class="overflow-hidden rounded-2xl bg-stone-100">
-                            <img
-                                src="/storage/{img.image}"
-                                alt={t('product.image_alt', ':name — фото :number', { name: product.name, number: i + 1 })}
-                                class="w-full object-cover"
-                            />
+                    <div class="overflow-hidden rounded-2xl bg-stone-100">
+                        <img
+                            src={selectedImage}
+                            alt={t('product.image_alt', ':name — основное фото', { name: product.name })}
+                            class="aspect-square w-full object-cover"
+                        />
+                    </div>
+
+                    {#if product.image || product.images.length > 0}
+                        <div class="grid grid-cols-4 gap-3 sm:grid-cols-5">
+                            {#if product.image}
+                                <button
+                                    type="button"
+                                    onclick={() => selectImage(product.image)}
+                                    class="overflow-hidden rounded-xl border transition-colors {selectedImage === product.image
+                                        ? 'border-stone-900'
+                                        : 'border-stone-200 hover:border-stone-300'}"
+                                >
+                                    <img
+                                        src={product.image_thumb ?? product.image}
+                                        alt={t('product.image_alt', ':name — основное фото', { name: product.name })}
+                                        class="aspect-square w-full object-cover"
+                                    />
+                                </button>
+                            {/if}
+
+                            {#each product.images as img, i}
+                                <button
+                                    type="button"
+                                    onclick={() => selectImage(img.image)}
+                                    class="overflow-hidden rounded-xl border transition-colors {selectedImage === img.image
+                                        ? 'border-stone-900'
+                                        : 'border-stone-200 hover:border-stone-300'}"
+                                >
+                                    <img
+                                        src={img.thumb ?? img.image}
+                                        alt={t('product.image_alt', ':name — фото :number', { name: product.name, number: i + 1 })}
+                                        class="aspect-square w-full object-cover"
+                                    />
+                                </button>
+                            {/each}
                         </div>
-                    {/each}
+                    {/if}
                 </div>
             {:else}
                 <div class="flex aspect-square items-center justify-center rounded-2xl bg-stone-100">
