@@ -14,7 +14,7 @@
 
     function changePassword(e) {
         e.preventDefault();
-        passwordForm.put('/storefront/profile/password', {
+        passwordForm.put('/profile/password', {
             onSuccess: () => passwordForm.reset(),
         });
     }

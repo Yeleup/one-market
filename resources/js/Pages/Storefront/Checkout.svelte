@@ -22,7 +22,7 @@
 
     function submit(e) {
         e.preventDefault();
-        form.post('/storefront/checkout');
+        form.post('/checkout');
     }
 </script>
 
@@ -33,7 +33,7 @@
     {#if items.length === 0}
         <div class="flex flex-col items-center justify-center py-16 text-center">
             <p class="mb-2 text-sm text-stone-500">{t('checkout.empty', 'Корзина пуста')}</p>
-            <a href="/storefront" class="text-sm font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-900">
+            <a href="/" class="text-sm font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-900">
                 {t('checkout.go_to_catalog', 'Перейти в каталог')}
             </a>
         </div>

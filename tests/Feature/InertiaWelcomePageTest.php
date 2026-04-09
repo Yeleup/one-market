@@ -2,14 +2,14 @@
 
 use Inertia\Testing\AssertableInertia;
 
-test('the welcome page renders the inertia home page', function () {
+test('the root url renders the storefront catalog page', function () {
     config()->set('session.driver', 'array');
 
     $response = $this->get('/');
 
     $response
         ->assertSuccessful()
-        ->assertInertia(fn (AssertableInertia $page) => $page->component('Home', false));
+        ->assertInertia(fn (AssertableInertia $page) => $page->component('Storefront/Catalog'));
 });
 
 test('the inertia app loads css through the js vite entrypoint', function () {

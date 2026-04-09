@@ -11,7 +11,7 @@
 
     function submit(e) {
         e.preventDefault();
-        form.post('/storefront/login');
+        form.post('/login');
     }
 </script>
 
@@ -68,7 +68,7 @@
 
         <p class="mt-6 text-center text-sm text-stone-500">
             {t('auth.login.no_account', 'Нет аккаунта?')}
-            <a href="/storefront/register" class="font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 transition-colors hover:decoration-stone-900">
+            <a href="/register" class="font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 transition-colors hover:decoration-stone-900">
                 {t('auth.login.register', 'Зарегистрироваться')}
             </a>
         </p>

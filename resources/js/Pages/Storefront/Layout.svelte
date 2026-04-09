@@ -28,7 +28,7 @@
     });
 
     function logout() {
-        router.post('/storefront/logout');
+        router.post('/logout');
     }
 
     function closeMobileMenu() {
@@ -41,7 +41,7 @@
             return;
         }
 
-        router.post('/storefront/language', {
+        router.post('/language', {
             language: languageCode,
         }, {
             preserveScroll: true,
@@ -72,7 +72,7 @@
         <div class="mx-auto max-w-6xl px-4 sm:px-6">
             <div class="flex h-16 items-center justify-between">
                 <!-- Logo -->
-                <a href="/storefront" class="text-lg font-semibold tracking-tight text-stone-900">
+                <a href="/" class="text-lg font-semibold tracking-tight text-stone-900">
                     One Market
                 </a>
 
@@ -80,19 +80,19 @@
                 <nav class="hidden items-center gap-1 md:flex">
                     {#if page.props.auth?.client}
                         <a
-                            href="/storefront/dashboard"
+                            href="/dashboard"
                             class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
                         >
                             {t('layout.nav.dashboard', 'Кабинет')}
                         </a>
                         <a
-                            href="/storefront/orders"
+                            href="/orders"
                             class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
                         >
                             {t('layout.nav.orders', 'Заказы')}
                         </a>
                         <a
-                            href="/storefront/bonuses"
+                            href="/bonuses"
                             class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
                         >
                             {t('layout.nav.bonuses', 'Бонусы')}
@@ -121,7 +121,7 @@
                     {/if}
 
                     <a
-                        href="/storefront/cart"
+                        href="/cart"
                         class="relative rounded-lg p-2 text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -140,7 +140,7 @@
                                 {t('layout.available_bonuses', ':count бонусов', { count: page.props.auth.client.available_bonuses })}
                             </span>
                             <a
-                                href="/storefront/profile"
+                                href="/profile"
                                 class="text-sm font-medium text-stone-700 transition-colors hover:text-stone-900"
                             >
                                 {page.props.auth.client.full_name}
@@ -156,13 +156,13 @@
                         </div>
                     {:else}
                         <a
-                            href="/storefront/login"
+                            href="/login"
                             class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
                         >
                             {t('layout.auth.login', 'Войти')}
                         </a>
                         <a
-                            href="/storefront/register"
+                            href="/register"
                             class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-stone-800"
                         >
                             {t('layout.auth.register', 'Регистрация')}
@@ -173,7 +173,7 @@
                 <!-- Mobile: cart + hamburger -->
                 <div class="flex items-center gap-2 md:hidden">
                     <a
-                        href="/storefront/cart"
+                        href="/cart"
                         class="relative rounded-lg p-2 text-stone-600 transition-colors hover:bg-stone-100"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -207,12 +207,12 @@
         {#if mobileMenuOpen}
             <div class="border-t border-stone-100 bg-white md:hidden">
                 <div class="space-y-1 px-4 pb-4 pt-3">
-                    <a onclick={closeMobileMenu} href="/storefront" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.catalog', 'Каталог')}</a>
+                    <a onclick={closeMobileMenu} href="/" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.catalog', 'Каталог')}</a>
                     {#if page.props.auth?.client}
-                        <a onclick={closeMobileMenu} href="/storefront/dashboard" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.dashboard', 'Кабинет')}</a>
-                        <a onclick={closeMobileMenu} href="/storefront/orders" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.orders', 'Заказы')}</a>
-                        <a onclick={closeMobileMenu} href="/storefront/bonuses" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.bonuses', 'Бонусы')}</a>
-                        <a onclick={closeMobileMenu} href="/storefront/profile" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.profile', 'Профиль')}</a>
+                        <a onclick={closeMobileMenu} href="/dashboard" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.dashboard', 'Кабинет')}</a>
+                        <a onclick={closeMobileMenu} href="/orders" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.orders', 'Заказы')}</a>
+                        <a onclick={closeMobileMenu} href="/bonuses" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.bonuses', 'Бонусы')}</a>
+                        <a onclick={closeMobileMenu} href="/profile" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">{t('layout.nav.profile', 'Профиль')}</a>
                         <div class="border-t border-stone-100 pt-2">
                             <div class="mb-2 px-3 text-xs font-medium text-emerald-600">
                                 {t('layout.available_bonuses', ':count бонусов', { count: page.props.auth.client.available_bonuses })}
@@ -223,10 +223,10 @@
                         </div>
                     {:else}
                         <div class="flex gap-2 border-t border-stone-100 pt-3">
-                            <a onclick={closeMobileMenu} href="/storefront/login" class="flex-1 rounded-lg border border-stone-200 px-3 py-2.5 text-center text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">
+                            <a onclick={closeMobileMenu} href="/login" class="flex-1 rounded-lg border border-stone-200 px-3 py-2.5 text-center text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">
                                 {t('layout.auth.login', 'Войти')}
                             </a>
-                            <a onclick={closeMobileMenu} href="/storefront/register" class="flex-1 rounded-lg bg-stone-900 px-3 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-stone-800">
+                            <a onclick={closeMobileMenu} href="/register" class="flex-1 rounded-lg bg-stone-900 px-3 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-stone-800">
                                 {t('layout.auth.register', 'Регистрация')}
                             </a>
                         </div>

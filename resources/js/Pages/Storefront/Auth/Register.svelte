@@ -17,7 +17,7 @@
 
     function submit(e) {
         e.preventDefault();
-        form.post('/storefront/register');
+        form.post('/register');
     }
 </script>
 
@@ -132,7 +132,7 @@
 
         <p class="mt-6 text-center text-sm text-stone-500">
             {t('auth.register.have_account', 'Уже есть аккаунт?')}
-            <a href="/storefront/login" class="font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 transition-colors hover:decoration-stone-900">
+            <a href="/login" class="font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 transition-colors hover:decoration-stone-900">
                 {t('auth.register.login', 'Войти')}
             </a>
         </p>

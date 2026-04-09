@@ -7,11 +7,11 @@
     const { t } = useStorefrontTranslations();
 
     function updateQuantity(productId, quantity) {
-        router.patch(`/storefront/cart/${productId}`, { quantity }, { preserveScroll: true });
+        router.patch(`/cart/${productId}`, { quantity }, { preserveScroll: true });
     }
 
     function removeItem(productId) {
-        router.delete(`/storefront/cart/${productId}`, { preserveScroll: true });
+        router.delete(`/cart/${productId}`, { preserveScroll: true });
     }
 </script>
 
@@ -26,7 +26,7 @@
             </svg>
             <p class="mb-1 text-sm font-medium text-stone-700">{t('cart.empty_title', 'Корзина пуста')}</p>
             <p class="mb-4 text-xs text-stone-400">{t('cart.empty_description', 'Добавьте товары из каталога')}</p>
-            <a href="/storefront" class="rounded-xl bg-stone-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-800">
+            <a href="/" class="rounded-xl bg-stone-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-stone-800">
                 {t('cart.go_to_catalog', 'Перейти в каталог')}
             </a>
         </div>
@@ -98,7 +98,7 @@
                         </div>
                     </div>
                     <a
-                        href="/storefront/checkout"
+                        href="/checkout"
                         class="mt-5 block rounded-xl bg-stone-900 px-4 py-3 text-center text-sm font-medium text-white transition-all hover:bg-stone-800 active:scale-[0.98]"
                     >
                         {t('cart.checkout', 'Оформить заказ')}

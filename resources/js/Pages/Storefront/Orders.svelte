@@ -33,7 +33,7 @@
         <!-- Mobile: card layout -->
         <div class="space-y-3 sm:hidden">
             {#each orders.data as order}
-                <a href="/storefront/orders/{order.id}" class="block rounded-2xl border border-stone-200 bg-white p-4 transition-colors hover:border-stone-300">
+                <a href="/orders/{order.id}" class="block rounded-2xl border border-stone-200 bg-white p-4 transition-colors hover:border-stone-300">
                     <div class="mb-2 flex items-center justify-between">
                         <span class="text-sm font-medium text-stone-900">{t('orders.order_number', 'Заказ #:id', { id: order.id })}</span>
                         <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-medium {statusColors[order.status]}">
@@ -63,7 +63,7 @@
                         </thead>
                     <tbody>
                         {#each orders.data as order}
-                            <tr onclick={() => router.visit(`/storefront/orders/${order.id}`)} style="cursor: pointer;" class="border-t border-stone-50 transition-colors hover:bg-stone-50/50">
+                            <tr onclick={() => router.visit(`/orders/${order.id}`)} style="cursor: pointer;" class="border-t border-stone-50 transition-colors hover:bg-stone-50/50">
                                 <td class="px-4 py-3">
                                     <span class="font-medium text-stone-900 hover:underline">{order.id}</span>
                                 </td>
