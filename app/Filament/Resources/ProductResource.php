@@ -117,7 +117,9 @@ class ProductResource extends Resource
                                 FileUpload::make('image')
                                     ->label(__('admin.common.fields.image'))
                                     ->image()
-                                    ->directory('products'),
+                                    ->disk('public')
+                                    ->directory(fn (?Product $record): string => $record ? "products/{$record->getKey()}" : 'products')
+                                    ->visibility('public'),
                                 Toggle::make('is_active')
                                     ->label(__('admin.common.fields.is_active'))
                                     ->default(true),
@@ -146,8 +148,9 @@ class ProductResource extends Resource
                                         FileUpload::make('image')
                                             ->label(__('admin.common.fields.image'))
                                             ->image()
-                                            ->directory('products/gallery')
-                                            ->required(),
+                                            ->disk('public')
+                                            ->directory(fn (?Product $record): string => $record ? "products/{$record->getKey()}/gallery" : 'products/gallery')
+                                            ->visibility('public'),
                                         TextInput::make('sort_order')
                                             ->label(__('admin.common.fields.sort_order'))
                                             ->numeric()
@@ -166,7 +169,7 @@ class ProductResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
-                ImageColumn::make('image')->label(__('admin.common.fields.image')),
+                ImageColumn::make('image')->label(__('admin.common.fields.image'))->disk('public'),
                 TextColumn::make('localized_name')
                     ->label(__('admin.common.fields.name'))
                     ->searchable(
