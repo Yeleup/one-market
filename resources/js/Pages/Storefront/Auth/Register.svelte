@@ -1,8 +1,10 @@
 <script>
     import { useForm } from '@inertiajs/svelte';
     import Layout from '../Layout.svelte';
+    import { useStorefrontTranslations } from '../i18n.js';
 
     let { institutions } = $props();
+    const { t } = useStorefrontTranslations();
 
     const form = useForm({
         first_name: '',
@@ -24,8 +26,8 @@
     <div class="w-full max-w-sm">
         <!-- Header -->
         <div class="mb-8 text-center">
-            <h1 class="text-2xl font-semibold tracking-tight text-stone-900">Создать аккаунт</h1>
-            <p class="mt-2 text-sm text-stone-500">Заполните данные для регистрации</p>
+            <h1 class="text-2xl font-semibold tracking-tight text-stone-900">{t('auth.register.title', 'Создать аккаунт')}</h1>
+            <p class="mt-2 text-sm text-stone-500">{t('auth.register.subtitle', 'Заполните данные для регистрации')}</p>
         </div>
 
         <!-- Form card -->
@@ -34,12 +36,12 @@
                 <!-- Name fields in a row on larger screens -->
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label for="reg-first-name" class="mb-1.5 block text-sm font-medium text-stone-700">Имя</label>
+                        <label for="reg-first-name" class="mb-1.5 block text-sm font-medium text-stone-700">{t('auth.register.first_name', 'Имя')}</label>
                         <input
                             id="reg-first-name"
                             type="text"
                             bind:value={form.first_name}
-                            placeholder="Имя"
+                            placeholder={t('auth.register.first_name', 'Имя')}
                             class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                         />
                         {#if form.errors.first_name}
@@ -47,12 +49,12 @@
                         {/if}
                     </div>
                     <div>
-                        <label for="reg-last-name" class="mb-1.5 block text-sm font-medium text-stone-700">Фамилия</label>
+                        <label for="reg-last-name" class="mb-1.5 block text-sm font-medium text-stone-700">{t('auth.register.last_name', 'Фамилия')}</label>
                         <input
                             id="reg-last-name"
                             type="text"
                             bind:value={form.last_name}
-                            placeholder="Фамилия"
+                            placeholder={t('auth.register.last_name', 'Фамилия')}
                             class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                         />
                         {#if form.errors.last_name}
@@ -62,12 +64,12 @@
                 </div>
 
                 <div>
-                    <label for="reg-bin" class="mb-1.5 block text-sm font-medium text-stone-700">БИН</label>
+                    <label for="reg-bin" class="mb-1.5 block text-sm font-medium text-stone-700">{t('auth.register.bin', 'БИН')}</label>
                     <input
                         id="reg-bin"
                         type="text"
                         bind:value={form.bin}
-                        placeholder="Введите БИН"
+                        placeholder={t('auth.register.bin_placeholder', 'Введите БИН')}
                         class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                         maxlength="12"
                     />
@@ -77,13 +79,13 @@
                 </div>
 
                 <div>
-                    <label for="reg-institution" class="mb-1.5 block text-sm font-medium text-stone-700">Учреждение</label>
+                    <label for="reg-institution" class="mb-1.5 block text-sm font-medium text-stone-700">{t('auth.register.institution', 'Учреждение')}</label>
                     <select
                         id="reg-institution"
                         bind:value={form.institution_id}
                         class="block w-full appearance-none rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                     >
-                        <option value="">— Не выбрано —</option>
+                        <option value="">{t('auth.register.institution_placeholder', '— Не выбрано —')}</option>
                         {#each institutions as inst}
                             <option value={inst.id}>{inst.name}</option>
                         {/each}
@@ -94,12 +96,12 @@
                 </div>
 
                 <div>
-                    <label for="reg-password" class="mb-1.5 block text-sm font-medium text-stone-700">Пароль</label>
+                    <label for="reg-password" class="mb-1.5 block text-sm font-medium text-stone-700">{t('auth.register.password', 'Пароль')}</label>
                     <input
                         id="reg-password"
                         type="password"
                         bind:value={form.password}
-                        placeholder="Минимум 8 символов"
+                        placeholder={t('auth.register.password_placeholder', 'Минимум 8 символов')}
                         class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                     />
                     {#if form.errors.password}
@@ -108,12 +110,12 @@
                 </div>
 
                 <div>
-                    <label for="reg-password-confirm" class="mb-1.5 block text-sm font-medium text-stone-700">Подтвердите пароль</label>
+                    <label for="reg-password-confirm" class="mb-1.5 block text-sm font-medium text-stone-700">{t('auth.register.password_confirmation', 'Подтвердите пароль')}</label>
                     <input
                         id="reg-password-confirm"
                         type="password"
                         bind:value={form.password_confirmation}
-                        placeholder="Повторите пароль"
+                        placeholder={t('auth.register.password_confirmation_placeholder', 'Повторите пароль')}
                         class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                     />
                 </div>
@@ -123,15 +125,15 @@
                     disabled={form.processing}
                     class="w-full rounded-xl bg-stone-900 px-4 py-3 text-sm font-medium text-white transition-all hover:bg-stone-800 active:scale-[0.98] disabled:opacity-50"
                 >
-                    {form.processing ? 'Регистрация...' : 'Зарегистрироваться'}
+                    {form.processing ? t('auth.register.submitting', 'Регистрация...') : t('auth.register.submit', 'Зарегистрироваться')}
                 </button>
             </form>
         </div>
 
         <p class="mt-6 text-center text-sm text-stone-500">
-            Уже есть аккаунт?
+            {t('auth.register.have_account', 'Уже есть аккаунт?')}
             <a href="/storefront/login" class="font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 transition-colors hover:decoration-stone-900">
-                Войти
+                {t('auth.register.login', 'Войти')}
             </a>
         </p>
     </div>

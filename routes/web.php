@@ -37,6 +37,7 @@ Route::prefix('storefront')
             ->middleware('client.auth');
 
         // Public catalog
+        Route::post('language', Storefront\LanguageController::class)->name('language');
         Route::get('/', [Storefront\CatalogController::class, 'index'])->name('catalog');
         Route::get('products/{product}', [Storefront\CatalogController::class, 'show'])->name('products.show');
 

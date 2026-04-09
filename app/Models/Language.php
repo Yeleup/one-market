@@ -45,6 +45,33 @@ class Language extends Model
         return (string) config('app.fallback_locale', 'en');
     }
 
+    public static function resolveStorefrontLocale(?string $code = null): string
+    {
+        $requestedLocale = Str::of((string) $code)
+            ->replace('-', '_')
+            ->lower()
+            ->toString();
+
+        $activeLanguages = static::query()
+            ->active()
+            ->ordered()
+            ->get(['code', 'is_default']);
+
+        if ($requestedLocale !== '') {
+            $matchingLanguage = $activeLanguages->firstWhere('code', $requestedLocale);
+
+            if ($matchingLanguage !== null) {
+                return $matchingLanguage->code;
+            }
+        }
+
+        return (string) (
+            $activeLanguages->firstWhere('is_default', true)?->code
+            ?? $activeLanguages->first()?->code
+            ?? static::resolveAdminLocale(config('app.locale'))
+        );
+    }
+
     /**
      * @return array<string, string>
      */

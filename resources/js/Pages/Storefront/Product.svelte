@@ -1,9 +1,11 @@
 <script>
     import { router } from '@inertiajs/svelte';
     import Layout from './Layout.svelte';
+    import { useStorefrontTranslations } from './i18n.js';
 
     let { product } = $props();
     let quantity = $state(1);
+    const { t } = useStorefrontTranslations();
 
     function addToCart() {
         router.post('/storefront/cart', {
@@ -19,7 +21,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
         </svg>
-        Назад в каталог
+        {t('product.back', 'Назад в каталог')}
     </a>
 
     {#if product.category}
@@ -35,7 +37,7 @@
                         <div class="overflow-hidden rounded-2xl bg-stone-100">
                             <img
                                 src="/storage/{img.image}"
-                                alt="{product.name} — фото {i + 1}"
+                                alt={t('product.image_alt', ':name — фото :number', { name: product.name, number: i + 1 })}
                                 class="w-full object-cover"
                             />
                         </div>
@@ -57,14 +59,16 @@
             <div class="mt-6 space-y-4">
                 <div>
                     <span class="text-3xl font-bold text-stone-900">{product.bonus_price}</span>
-                    <span class="ml-1.5 text-sm text-stone-400">бонусов</span>
+                    <span class="ml-1.5 text-sm text-stone-400">{t('product.price_suffix', 'бонусов')}</span>
                 </div>
 
                 <div class="flex items-center gap-4 text-sm">
-                    <span class="text-stone-500">Вес: {product.weight_grams} г</span>
+                    <span class="text-stone-500">{t('product.weight', 'Вес: :weight г', { weight: product.weight_grams })}</span>
                     <span class="text-stone-300">·</span>
                     <span class="{product.stock_quantity > 0 ? 'text-emerald-600' : 'text-red-500'}">
-                        {product.stock_quantity > 0 ? `В наличии: ${product.stock_quantity} шт.` : 'Нет в наличии'}
+                        {product.stock_quantity > 0
+                            ? t('product.in_stock_count', 'В наличии: :count шт.', { count: product.stock_quantity })
+                            : t('product.out_of_stock', 'Нет в наличии')}
                     </span>
                 </div>
             </div>
@@ -96,7 +100,7 @@
                         onclick={addToCart}
                         class="flex-1 rounded-xl bg-stone-900 px-6 py-3 text-sm font-medium text-white transition-all hover:bg-stone-800 active:scale-[0.98]"
                     >
-                        В корзину
+                        {t('common.buttons.add_to_cart', 'В корзину')}
                     </button>
                 </div>
             {/if}

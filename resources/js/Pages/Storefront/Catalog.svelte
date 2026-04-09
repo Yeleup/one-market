@@ -1,8 +1,10 @@
 <script>
     import { router } from '@inertiajs/svelte';
+    import { useStorefrontTranslations } from './i18n.js';
     import Layout from './Layout.svelte';
 
     let { categories, products, filters } = $props();
+    const { t } = useStorefrontTranslations();
 
     let search = $state(filters.search ?? '');
     let selectedCategoryId = $derived.by(() => {
@@ -55,8 +57,8 @@
         }
 
         return selectedChildCategory
-            ? `${selectedParentCategory.name}`
-            : 'Назад';
+            ? t('catalog.back_to_parent', '← :name', { name: selectedParentCategory.name })
+            : t('catalog.back', '← Назад');
     });
 
     function filterByCategory(categoryId) {
@@ -101,14 +103,14 @@
             <input
                 type="text"
                 bind:value={search}
-                placeholder="Поиск товаров..."
+                placeholder={t('catalog.search_placeholder', 'Поиск товаров...')}
                 class="block w-full rounded-xl border border-stone-200 bg-white py-3 pl-11 pr-24 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-300 focus:outline-none focus:ring-2 focus:ring-stone-900/5"
             />
             <button
                 type="submit"
                 class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-stone-900 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-stone-800"
             >
-                Найти
+                {t('common.buttons.search', 'Найти')}
             </button>
         </div>
     </form>
@@ -128,7 +130,7 @@
                     onclick={() => filterByCategory(null)}
                     class={categoryButtonClass(selectedCategoryId === null)}
                 >
-                    Все
+                    {t('catalog.all_categories', 'Все')}
                 </button>
             {/if}
 
@@ -149,7 +151,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="mb-4 h-12 w-12 text-stone-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <p class="text-sm text-stone-500">Товары не найдены</p>
+            <p class="text-sm text-stone-500">{t('catalog.empty', 'Товары не найдены')}</p>
         </div>
     {:else}
         <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
@@ -178,20 +180,22 @@
                         </a>
                         <div class="mt-2 flex items-baseline gap-2">
                             <span class="text-base font-semibold text-stone-900">{product.bonus_price}</span>
-                            <span class="text-xs text-stone-400">бонусов</span>
+                            <span class="text-xs text-stone-400">{t('common.units.bonuses', 'бонусов')}</span>
                         </div>
                         <div class="mt-1 text-xs text-stone-400">
-                            {product.weight_grams} г
+                            {product.weight_grams} {t('common.units.grams_short', 'г')}
                         </div>
                         <div class="mt-1 text-xs {product.stock_quantity > 0 ? 'text-emerald-600' : 'text-red-500'}">
-                            {product.stock_quantity > 0 ? `В наличии` : 'Нет в наличии'}
+                            {product.stock_quantity > 0
+                                ? t('catalog.available', 'В наличии')
+                                : t('catalog.out_of_stock', 'Нет в наличии')}
                         </div>
                         <button
                             onclick={() => addToCart(product.id)}
                             disabled={product.stock_quantity <= 0}
                             class="mt-3 w-full rounded-xl bg-stone-900 px-3 py-2.5 text-xs font-medium text-white transition-all hover:bg-stone-800 active:scale-[0.98] disabled:bg-stone-200 disabled:text-stone-400"
                         >
-                            В корзину
+                            {t('common.buttons.add_to_cart', 'В корзину')}
                         </button>
                     </div>
                 </div>
