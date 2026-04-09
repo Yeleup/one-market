@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Category;
+use App\Models\Language;
 use App\Models\Product;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -19,6 +21,36 @@ it('only shows active products', function () {
         ->assertInertia(fn ($page) => $page
             ->component('Storefront/Catalog')
             ->has('products.data', 1)
+        );
+});
+
+it('passes parent categories with nested children', function (): void {
+    $language = Language::factory()->default()->create(['code' => 'en']);
+
+    $parentCategory = Category::factory()->create();
+    $parentCategory->translations()->create([
+        'language_id' => $language->getKey(),
+        'name' => 'Snacks',
+    ]);
+
+    $childCategory = Category::factory()->create([
+        'parent_id' => $parentCategory->getKey(),
+    ]);
+    $childCategory->translations()->create([
+        'language_id' => $language->getKey(),
+        'name' => 'Chips',
+    ]);
+
+    $this->get(route('storefront.catalog'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Storefront/Catalog')
+            ->has('categories', 1)
+            ->where('categories.0.id', $parentCategory->getKey())
+            ->where('categories.0.name', 'Snacks')
+            ->has('categories.0.children', 1)
+            ->where('categories.0.children.0.id', $childCategory->getKey())
+            ->where('categories.0.children.0.name', 'Chips')
         );
 });
 

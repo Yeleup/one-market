@@ -11,3 +11,12 @@ test('the welcome page renders the inertia home page', function () {
         ->assertSuccessful()
         ->assertInertia(fn (AssertableInertia $page) => $page->component('Home', false));
 });
+
+test('the inertia app loads css through the js vite entrypoint', function () {
+    expect(file_get_contents(resource_path('js/app.js')))
+        ->toContain("import '../css/app.css';");
+
+    expect(file_get_contents(resource_path('views/app.blade.php')))
+        ->toContain("@vite('resources/js/app.js')")
+        ->not->toContain('resources/css/app.css');
+});

@@ -9,7 +9,7 @@
     });
 
     let selectedInstitution = $derived(
-        institutions.find(i => i.id == $form.institution_id)
+        institutions.find(i => i.id == form.institution_id)
     );
 
     let weightExceeded = $derived(
@@ -20,93 +20,99 @@
 
     function submit(e) {
         e.preventDefault();
-        $form.post('/storefront/checkout');
+        form.post('/storefront/checkout');
     }
 </script>
 
 {#snippet children()}
 <div>
-    <h1 class="mb-6 text-2xl font-bold text-gray-900">Оформление заказа</h1>
+    <h1 class="mb-6 text-2xl font-semibold tracking-tight text-stone-900">Оформление заказа</h1>
 
     {#if items.length === 0}
-        <p class="text-gray-500">Корзина пуста. <a href="/storefront" class="text-blue-600 hover:underline">Перейти в каталог</a></p>
+        <div class="flex flex-col items-center justify-center py-16 text-center">
+            <p class="mb-2 text-sm text-stone-500">Корзина пуста</p>
+            <a href="/storefront" class="text-sm font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-900">
+                Перейти в каталог
+            </a>
+        </div>
     {:else}
-        <div class="grid gap-6 lg:grid-cols-3">
+        <div class="flex flex-col gap-6 lg:flex-row lg:gap-8">
             <!-- Order items -->
-            <div class="lg:col-span-2">
-                <div class="rounded-lg border bg-white p-4">
-                    <h2 class="mb-4 text-lg font-semibold text-gray-900">Товары</h2>
+            <div class="flex-1">
+                <div class="rounded-2xl border border-stone-200 bg-white p-5">
+                    <h2 class="mb-4 text-sm font-semibold text-stone-900">Товары</h2>
                     <div class="space-y-3">
                         {#each items as item}
-                            <div class="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+                            <div class="flex items-center justify-between border-b border-stone-100 pb-3 last:border-0 last:pb-0">
                                 <div>
-                                    <span class="font-medium text-gray-900">{item.name}</span>
-                                    <span class="ml-2 text-sm text-gray-500">&times; {item.quantity}</span>
+                                    <span class="text-sm font-medium text-stone-900">{item.name}</span>
+                                    <span class="ml-2 text-xs text-stone-400">× {item.quantity}</span>
                                 </div>
-                                <span class="font-medium text-gray-900">{item.line_total_bonus} бон.</span>
+                                <span class="text-sm font-medium text-stone-700">{item.line_total_bonus} бон.</span>
                             </div>
                         {/each}
                     </div>
                 </div>
             </div>
 
-            <!-- Summary & Form -->
-            <div class="space-y-4">
-                <div class="rounded-lg border bg-white p-4">
-                    <h2 class="mb-4 text-lg font-semibold text-gray-900">Итого</h2>
+            <!-- Summary & form -->
+            <div class="w-full space-y-4 lg:w-80">
+                <div class="rounded-2xl border border-stone-200 bg-white p-5">
+                    <h2 class="mb-4 text-sm font-semibold text-stone-900">Итого</h2>
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Стоимость:</span>
-                            <span class="font-medium">{totalBonuses} бонусов</span>
+                            <span class="text-stone-500">Стоимость</span>
+                            <span class="font-medium text-stone-700">{totalBonuses} бонусов</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Вес:</span>
-                            <span class="font-medium">{totalWeightGrams} г</span>
+                            <span class="text-stone-500">Вес</span>
+                            <span class="font-medium text-stone-700">{totalWeightGrams} г</span>
                         </div>
-                        <div class="flex justify-between border-t pt-2">
-                            <span class="text-gray-600">Доступно бонусов:</span>
-                            <span class="font-medium" class:text-red-600={bonusInsufficient}>
-                                {availableBonuses}
+                        <div class="flex justify-between border-t border-stone-100 pt-2">
+                            <span class="text-stone-500">Доступно</span>
+                            <span class="font-medium {bonusInsufficient ? 'text-red-600' : 'text-emerald-600'}">
+                                {availableBonuses} бонусов
                             </span>
                         </div>
                     </div>
 
                     {#if bonusInsufficient}
-                        <p class="mt-3 text-sm text-red-600">Недостаточно бонусов для оформления заказа.</p>
+                        <div class="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
+                            Недостаточно бонусов для оформления заказа
+                        </div>
                     {/if}
-
                     {#if weightExceeded}
-                        <p class="mt-3 text-sm text-red-600">
-                            Вес корзины ({totalWeightGrams} г) превышает лимит учреждения ({selectedInstitution.max_weight_grams} г).
-                        </p>
+                        <div class="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
+                            Вес ({totalWeightGrams} г) превышает лимит ({selectedInstitution.max_weight_grams} г)
+                        </div>
                     {/if}
                 </div>
 
-                <form onsubmit={submit} class="rounded-lg border bg-white p-4">
-                    <label for="institution_id" class="block text-sm font-medium text-gray-700">Учреждение</label>
+                <form onsubmit={submit} class="rounded-2xl border border-stone-200 bg-white p-5">
+                    <label for="checkout-institution" class="mb-1.5 block text-sm font-medium text-stone-700">Учреждение</label>
                     <select
-                        id="institution_id"
-                        bind:value={$form.institution_id}
-                        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        id="checkout-institution"
+                        bind:value={form.institution_id}
+                        class="block w-full appearance-none rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                     >
-                        <option value="">— Выберите учреждение —</option>
+                        <option value="">— Выберите —</option>
                         {#each institutions as inst}
                             <option value={inst.id}>{inst.name}</option>
                         {/each}
                     </select>
-                    {#if $form.errors.institution_id}
-                        <p class="mt-1 text-sm text-red-600">{$form.errors.institution_id}</p>
+                    {#if form.errors.institution_id}
+                        <p class="mt-1.5 text-xs text-red-600">{form.errors.institution_id}</p>
                     {/if}
-                    {#if $form.errors.cart}
-                        <p class="mt-1 text-sm text-red-600">{$form.errors.cart}</p>
+                    {#if form.errors.cart}
+                        <p class="mt-1.5 text-xs text-red-600">{form.errors.cart}</p>
                     {/if}
 
                     <button
                         type="submit"
-                        disabled={$form.processing || bonusInsufficient || weightExceeded || !$form.institution_id}
-                        class="mt-4 w-full rounded-md bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500"
+                        disabled={form.processing || bonusInsufficient || weightExceeded || !form.institution_id}
+                        class="mt-4 w-full rounded-xl bg-stone-900 px-4 py-3 text-sm font-medium text-white transition-all hover:bg-stone-800 active:scale-[0.98] disabled:bg-stone-200 disabled:text-stone-400"
                     >
-                        {$form.processing ? 'Оформление...' : 'Подтвердить заказ'}
+                        {form.processing ? 'Оформление...' : 'Подтвердить заказ'}
                     </button>
                 </form>
             </div>

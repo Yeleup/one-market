@@ -6,6 +6,8 @@
     const page = usePage();
 
     let showFlash = $state(true);
+    let mobileMenuOpen = $state(false);
+    let scrolled = $state(false);
 
     $effect(() => {
         if (page.props.flash?.success || page.props.flash?.error) {
@@ -15,8 +17,20 @@
         }
     });
 
+    $effect(() => {
+        function onScroll() {
+            scrolled = window.scrollY > 10;
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    });
+
     function logout() {
         router.post('/storefront/logout');
+    }
+
+    function closeMobileMenu() {
+        mobileMenuOpen = false;
     }
 </script>
 
@@ -24,79 +38,202 @@
     <title>One Market</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-stone-50 font-sans antialiased">
     <!-- Header -->
-    <header class="bg-white shadow-sm">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <header
+        class="sticky top-0 z-50 transition-all duration-300 {scrolled
+            ? 'bg-white/80 shadow-sm backdrop-blur-xl'
+            : 'bg-white'}"
+    >
+        <div class="mx-auto max-w-6xl px-4 sm:px-6">
             <div class="flex h-16 items-center justify-between">
-                <div class="flex items-center gap-8">
-                    <a href="/storefront" class="text-xl font-bold text-gray-900">One Market</a>
-                    <nav class="hidden items-center gap-4 md:flex">
-                        <a href="/storefront" class="text-sm text-gray-600 hover:text-gray-900">Каталог</a>
-                        {#if page.props.auth?.client}
-                            <a href="/storefront/dashboard" class="text-sm text-gray-600 hover:text-gray-900">Кабинет</a>
-                            <a href="/storefront/orders" class="text-sm text-gray-600 hover:text-gray-900">Заказы</a>
-                            <a href="/storefront/bonuses" class="text-sm text-gray-600 hover:text-gray-900">Бонусы</a>
-                        {/if}
-                    </nav>
-                </div>
+                <!-- Logo -->
+                <a href="/storefront" class="text-lg font-semibold tracking-tight text-stone-900">
+                    One Market
+                </a>
 
-                <div class="flex items-center gap-4">
-                    <a href="/storefront/cart" class="relative text-sm text-gray-600 hover:text-gray-900">
-                        Корзина
+                <!-- Desktop nav -->
+                <nav class="hidden items-center gap-1 md:flex">
+                    <a
+                        href="/storefront"
+                        class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
+                    >
+                        Каталог
+                    </a>
+                    {#if page.props.auth?.client}
+                        <a
+                            href="/storefront/dashboard"
+                            class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
+                        >
+                            Кабинет
+                        </a>
+                        <a
+                            href="/storefront/orders"
+                            class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
+                        >
+                            Заказы
+                        </a>
+                        <a
+                            href="/storefront/bonuses"
+                            class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
+                        >
+                            Бонусы
+                        </a>
+                    {/if}
+                </nav>
+
+                <!-- Desktop actions -->
+                <div class="hidden items-center gap-3 md:flex">
+                    <a
+                        href="/storefront/cart"
+                        class="relative rounded-lg p-2 text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                        </svg>
                         {#if page.props.cart?.count > 0}
-                            <span class="absolute -right-3 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+                            <span class="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-semibold text-white">
                                 {page.props.cart.count}
                             </span>
                         {/if}
                     </a>
 
                     {#if page.props.auth?.client}
-                        <span class="text-sm text-gray-500">
-                            {page.props.auth.client.available_bonuses} бонусов
-                        </span>
-                        <a href="/storefront/profile" class="text-sm text-gray-600 hover:text-gray-900">
-                            {page.props.auth.client.full_name}
-                        </a>
-                        <button onclick={logout} class="text-sm text-red-600 hover:text-red-800">
-                            Выйти
-                        </button>
+                        <div class="flex items-center gap-3 border-l border-stone-200 pl-3">
+                            <span class="text-xs font-medium text-emerald-600">
+                                {page.props.auth.client.available_bonuses} бонусов
+                            </span>
+                            <a
+                                href="/storefront/profile"
+                                class="text-sm font-medium text-stone-700 transition-colors hover:text-stone-900"
+                            >
+                                {page.props.auth.client.full_name}
+                            </a>
+                            <button
+                                onclick={logout}
+                                class="rounded-lg p-2 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-600"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                </svg>
+                            </button>
+                        </div>
                     {:else}
-                        <a href="/storefront/login" class="text-sm text-gray-600 hover:text-gray-900">Войти</a>
-                        <a href="/storefront/register" class="rounded-md bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700">
+                        <a
+                            href="/storefront/login"
+                            class="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900"
+                        >
+                            Войти
+                        </a>
+                        <a
+                            href="/storefront/register"
+                            class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-stone-800"
+                        >
                             Регистрация
                         </a>
                     {/if}
                 </div>
+
+                <!-- Mobile: cart + hamburger -->
+                <div class="flex items-center gap-2 md:hidden">
+                    <a
+                        href="/storefront/cart"
+                        class="relative rounded-lg p-2 text-stone-600 transition-colors hover:bg-stone-100"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                        </svg>
+                        {#if page.props.cart?.count > 0}
+                            <span class="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-semibold text-white">
+                                {page.props.cart.count}
+                            </span>
+                        {/if}
+                    </a>
+                    <button
+                        onclick={() => mobileMenuOpen = !mobileMenuOpen}
+                        class="rounded-lg p-2 text-stone-600 transition-colors hover:bg-stone-100"
+                    >
+                        {#if mobileMenuOpen}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        {:else}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                            </svg>
+                        {/if}
+                    </button>
+                </div>
             </div>
         </div>
+
+        <!-- Mobile dropdown menu -->
+        {#if mobileMenuOpen}
+            <div class="border-t border-stone-100 bg-white md:hidden">
+                <div class="space-y-1 px-4 pb-4 pt-3">
+                    <a onclick={closeMobileMenu} href="/storefront" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">Каталог</a>
+                    {#if page.props.auth?.client}
+                        <a onclick={closeMobileMenu} href="/storefront/dashboard" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">Кабинет</a>
+                        <a onclick={closeMobileMenu} href="/storefront/orders" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">Заказы</a>
+                        <a onclick={closeMobileMenu} href="/storefront/bonuses" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">Бонусы</a>
+                        <a onclick={closeMobileMenu} href="/storefront/profile" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">Профиль</a>
+                        <div class="border-t border-stone-100 pt-2">
+                            <div class="mb-2 px-3 text-xs font-medium text-emerald-600">
+                                {page.props.auth.client.available_bonuses} бонусов
+                            </div>
+                            <button onclick={() => { closeMobileMenu(); logout(); }} class="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50">
+                                Выйти
+                            </button>
+                        </div>
+                    {:else}
+                        <div class="flex gap-2 border-t border-stone-100 pt-3">
+                            <a onclick={closeMobileMenu} href="/storefront/login" class="flex-1 rounded-lg border border-stone-200 px-3 py-2.5 text-center text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50">
+                                Войти
+                            </a>
+                            <a onclick={closeMobileMenu} href="/storefront/register" class="flex-1 rounded-lg bg-stone-900 px-3 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-stone-800">
+                                Регистрация
+                            </a>
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        {/if}
     </header>
 
     <!-- Flash messages -->
     {#if showFlash && page.props.flash?.success}
-        <div class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-            <div class="rounded-md bg-green-50 p-4 text-sm text-green-800">
+        <div class="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
+            <div class="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 {page.props.flash.success}
             </div>
         </div>
     {/if}
     {#if showFlash && page.props.flash?.error}
-        <div class="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-            <div class="rounded-md bg-red-50 p-4 text-sm text-red-800">
+        <div class="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
+            <div class="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
                 {page.props.flash.error}
             </div>
         </div>
     {/if}
 
     <!-- Main content -->
-    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {@render children()}
     </main>
 
     <!-- Footer -->
-    <footer class="border-t bg-white py-8">
-        <div class="mx-auto max-w-7xl px-4 text-center text-sm text-gray-500 sm:px-6 lg:px-8">
-            &copy; {new Date().getFullYear()} One Market
+    <footer class="border-t border-stone-200 bg-white">
+        <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+            <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                <span class="text-sm font-medium text-stone-900">One Market</span>
+                <span class="text-xs text-stone-400">&copy; {new Date().getFullYear()} Все права защищены</span>
+            </div>
         </div>
     </footer>
 </div>

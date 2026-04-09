@@ -9,54 +9,68 @@
 
     function submit(e) {
         e.preventDefault();
-        $form.post('/storefront/login');
+        form.post('/storefront/login');
     }
 </script>
 
 {#snippet children()}
-<div class="mx-auto max-w-md">
-    <h1 class="mb-6 text-2xl font-bold text-gray-900">Вход</h1>
-
-    <form onsubmit={submit} class="space-y-4">
-        <div>
-            <label for="bin" class="block text-sm font-medium text-gray-700">БИН</label>
-            <input
-                id="bin"
-                type="text"
-                bind:value={$form.bin}
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                maxlength="12"
-            />
-            {#if $form.errors.bin}
-                <p class="mt-1 text-sm text-red-600">{$form.errors.bin}</p>
-            {/if}
+<div class="flex min-h-[60vh] items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+        <!-- Header -->
+        <div class="mb-8 text-center">
+            <h1 class="text-2xl font-semibold tracking-tight text-stone-900">Вход в аккаунт</h1>
+            <p class="mt-2 text-sm text-stone-500">Введите ваши данные для входа</p>
         </div>
 
-        <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">Пароль</label>
-            <input
-                id="password"
-                type="password"
-                bind:value={$form.password}
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            {#if $form.errors.password}
-                <p class="mt-1 text-sm text-red-600">{$form.errors.password}</p>
-            {/if}
+        <!-- Form card -->
+        <div class="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+            <form onsubmit={submit} class="space-y-5">
+                <div>
+                    <label for="login-bin" class="mb-1.5 block text-sm font-medium text-stone-700">БИН</label>
+                    <input
+                        id="login-bin"
+                        type="text"
+                        bind:value={form.bin}
+                        placeholder="Введите БИН"
+                        class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
+                        maxlength="12"
+                    />
+                    {#if form.errors.bin}
+                        <p class="mt-1.5 text-xs text-red-600">{form.errors.bin}</p>
+                    {/if}
+                </div>
+
+                <div>
+                    <label for="login-password" class="mb-1.5 block text-sm font-medium text-stone-700">Пароль</label>
+                    <input
+                        id="login-password"
+                        type="password"
+                        bind:value={form.password}
+                        placeholder="Введите пароль"
+                        class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
+                    />
+                    {#if form.errors.password}
+                        <p class="mt-1.5 text-xs text-red-600">{form.errors.password}</p>
+                    {/if}
+                </div>
+
+                <button
+                    type="submit"
+                    disabled={form.processing}
+                    class="w-full rounded-xl bg-stone-900 px-4 py-3 text-sm font-medium text-white transition-all hover:bg-stone-800 active:scale-[0.98] disabled:opacity-50"
+                >
+                    {form.processing ? 'Вход...' : 'Войти'}
+                </button>
+            </form>
         </div>
 
-        <button
-            type="submit"
-            disabled={$form.processing}
-            class="w-full rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-            {$form.processing ? 'Вход...' : 'Войти'}
-        </button>
-    </form>
-
-    <p class="mt-4 text-center text-sm text-gray-600">
-        Нет аккаунта? <a href="/storefront/register" class="text-blue-600 hover:underline">Зарегистрироваться</a>
-    </p>
+        <p class="mt-6 text-center text-sm text-stone-500">
+            Нет аккаунта?
+            <a href="/storefront/register" class="font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 transition-colors hover:decoration-stone-900">
+                Зарегистрироваться
+            </a>
+        </p>
+    </div>
 </div>
 {/snippet}
 

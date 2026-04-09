@@ -11,42 +11,47 @@
     };
 
     const statusColors = {
-        new: 'bg-blue-100 text-blue-800',
-        processing: 'bg-yellow-100 text-yellow-800',
-        delivered: 'bg-green-100 text-green-800',
-        cancelled: 'bg-red-100 text-red-800',
+        new: 'bg-sky-50 text-sky-700',
+        processing: 'bg-amber-50 text-amber-700',
+        delivered: 'bg-emerald-50 text-emerald-700',
+        cancelled: 'bg-red-50 text-red-700',
     };
 </script>
 
 {#snippet children()}
 <div>
-    <a href="/storefront/orders" class="mb-4 inline-block text-sm text-blue-600 hover:underline">&larr; Назад к заказам</a>
+    <a href="/storefront/orders" class="mb-6 inline-flex items-center gap-1.5 text-sm text-stone-500 transition-colors hover:text-stone-900">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Назад к заказам
+    </a>
 
-    <div class="mb-6 flex items-center gap-4">
-        <h1 class="text-2xl font-bold text-gray-900">Заказ #{order.id}</h1>
-        <span class="rounded-full px-3 py-1 text-sm font-medium {statusColors[order.status]}">
+    <div class="mb-6 flex flex-wrap items-center gap-3">
+        <h1 class="text-2xl font-semibold tracking-tight text-stone-900">Заказ #{order.id}</h1>
+        <span class="inline-flex rounded-full px-3 py-1 text-xs font-medium {statusColors[order.status]}">
             {statusLabels[order.status]}
         </span>
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-3">
+    <div class="flex flex-col gap-6 lg:flex-row lg:gap-8">
         <!-- Order items -->
-        <div class="lg:col-span-2">
-            <div class="rounded-lg border bg-white p-4">
-                <h2 class="mb-4 text-lg font-semibold text-gray-900">Товары</h2>
+        <div class="flex-1 space-y-4">
+            <div class="rounded-2xl border border-stone-200 bg-white p-5">
+                <h2 class="mb-4 text-sm font-semibold text-stone-900">Товары</h2>
                 <div class="space-y-3">
                     {#each order.items as item}
-                        <div class="flex items-center gap-4 border-b pb-3 last:border-0 last:pb-0">
+                        <div class="flex items-center gap-3 border-b border-stone-100 pb-3 last:border-0 last:pb-0">
                             {#if item.product_image}
-                                <img src="/storage/{item.product_image}" alt={item.product_name} class="h-12 w-12 rounded-md object-cover" />
+                                <img src="/storage/{item.product_image}" alt={item.product_name} class="h-12 w-12 shrink-0 rounded-xl object-cover" />
                             {:else}
-                                <div class="flex h-12 w-12 items-center justify-center rounded-md bg-gray-100 text-xs text-gray-400">-</div>
+                                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-xs text-stone-300">—</div>
                             {/if}
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-900">{item.product_name}</p>
-                                <p class="text-sm text-gray-500">{item.price_bonus} бон. &times; {item.quantity}</p>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-medium text-stone-900">{item.product_name}</p>
+                                <p class="text-xs text-stone-400">{item.price_bonus} бон. × {item.quantity}</p>
                             </div>
-                            <span class="font-medium text-gray-900">{item.line_total_bonus} бон.</span>
+                            <span class="shrink-0 text-sm font-medium text-stone-700">{item.line_total_bonus} бон.</span>
                         </div>
                     {/each}
                 </div>
@@ -54,17 +59,17 @@
 
             <!-- Status history -->
             {#if order.status_histories.length > 0}
-                <div class="mt-4 rounded-lg border bg-white p-4">
-                    <h2 class="mb-4 text-lg font-semibold text-gray-900">История статусов</h2>
+                <div class="rounded-2xl border border-stone-200 bg-white p-5">
+                    <h2 class="mb-4 text-sm font-semibold text-stone-900">История статусов</h2>
                     <div class="space-y-3">
                         {#each order.status_histories as history}
-                            <div class="flex items-center gap-3 text-sm">
-                                <span class="text-gray-500">{history.created_at}</span>
-                                <span class="rounded-full px-2 py-1 text-xs font-medium {statusColors[history.to_status]}">
+                            <div class="flex flex-wrap items-center gap-2 text-sm">
+                                <span class="text-xs text-stone-400">{history.created_at}</span>
+                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {statusColors[history.to_status]}">
                                     {statusLabels[history.to_status]}
                                 </span>
                                 {#if history.comment}
-                                    <span class="text-gray-600">{history.comment}</span>
+                                    <span class="text-xs text-stone-500">— {history.comment}</span>
                                 {/if}
                             </div>
                         {/each}
@@ -74,39 +79,41 @@
         </div>
 
         <!-- Summary -->
-        <div class="rounded-lg border bg-white p-4">
-            <h2 class="mb-4 text-lg font-semibold text-gray-900">Информация</h2>
-            <div class="space-y-3 text-sm">
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Дата:</span>
-                    <span class="font-medium">{order.placed_at}</span>
-                </div>
-                {#if order.institution}
+        <div class="w-full lg:w-72">
+            <div class="sticky top-20 rounded-2xl border border-stone-200 bg-white p-5">
+                <h2 class="mb-4 text-sm font-semibold text-stone-900">Информация</h2>
+                <div class="space-y-3 text-sm">
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Учреждение:</span>
-                        <span class="font-medium">{order.institution.name}</span>
+                        <span class="text-stone-500">Дата</span>
+                        <span class="font-medium text-stone-700">{order.placed_at}</span>
                     </div>
-                {/if}
-                <div class="flex justify-between">
-                    <span class="text-gray-600">Общий вес:</span>
-                    <span class="font-medium">{order.total_weight_grams} г</span>
-                </div>
-                <div class="flex justify-between border-t pt-3">
-                    <span class="text-gray-900 font-medium">Итого:</span>
-                    <span class="text-lg font-bold text-blue-600">{order.total_bonus} бон.</span>
-                </div>
-                {#if order.delivered_at}
+                    {#if order.institution}
+                        <div class="flex justify-between">
+                            <span class="text-stone-500">Учреждение</span>
+                            <span class="font-medium text-stone-700">{order.institution.name}</span>
+                        </div>
+                    {/if}
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Доставлен:</span>
-                        <span class="font-medium">{order.delivered_at}</span>
+                        <span class="text-stone-500">Вес</span>
+                        <span class="font-medium text-stone-700">{order.total_weight_grams} г</span>
                     </div>
-                {/if}
-                {#if order.cancelled_at}
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">Отменён:</span>
-                        <span class="font-medium">{order.cancelled_at}</span>
+                    <div class="flex justify-between border-t border-stone-100 pt-3">
+                        <span class="font-medium text-stone-900">Итого</span>
+                        <span class="text-lg font-bold text-stone-900">{order.total_bonus} бон.</span>
                     </div>
-                {/if}
+                    {#if order.delivered_at}
+                        <div class="flex justify-between text-xs">
+                            <span class="text-stone-400">Доставлен</span>
+                            <span class="text-emerald-600">{order.delivered_at}</span>
+                        </div>
+                    {/if}
+                    {#if order.cancelled_at}
+                        <div class="flex justify-between text-xs">
+                            <span class="text-stone-400">Отменён</span>
+                            <span class="text-red-500">{order.cancelled_at}</span>
+                        </div>
+                    {/if}
+                </div>
             </div>
         </div>
     </div>

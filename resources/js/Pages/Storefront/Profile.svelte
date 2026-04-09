@@ -12,91 +12,91 @@
 
     function changePassword(e) {
         e.preventDefault();
-        $passwordForm.put('/storefront/profile/password', {
-            onSuccess: () => $passwordForm.reset(),
+        passwordForm.put('/storefront/profile/password', {
+            onSuccess: () => passwordForm.reset(),
         });
     }
 </script>
 
 {#snippet children()}
-<div class="mx-auto max-w-2xl">
-    <h1 class="mb-6 text-2xl font-bold text-gray-900">Профиль</h1>
+<div class="mx-auto max-w-lg">
+    <h1 class="mb-6 text-2xl font-semibold tracking-tight text-stone-900">Профиль</h1>
 
     <!-- Client info -->
-    <div class="mb-8 rounded-lg border bg-white p-6">
-        <h2 class="mb-4 text-lg font-semibold text-gray-900">Данные</h2>
+    <div class="mb-6 rounded-2xl border border-stone-200 bg-white p-5">
+        <h2 class="mb-4 text-sm font-semibold text-stone-900">Данные</h2>
         <div class="space-y-3 text-sm">
             <div class="flex justify-between">
-                <span class="text-gray-600">Имя:</span>
-                <span class="font-medium">{client.first_name}</span>
+                <span class="text-stone-500">Имя</span>
+                <span class="font-medium text-stone-700">{client.first_name}</span>
             </div>
             <div class="flex justify-between">
-                <span class="text-gray-600">Фамилия:</span>
-                <span class="font-medium">{client.last_name}</span>
+                <span class="text-stone-500">Фамилия</span>
+                <span class="font-medium text-stone-700">{client.last_name}</span>
             </div>
             <div class="flex justify-between">
-                <span class="text-gray-600">БИН:</span>
-                <span class="font-medium">{client.bin}</span>
+                <span class="text-stone-500">БИН</span>
+                <span class="font-mono text-xs font-medium text-stone-700">{client.bin}</span>
             </div>
             {#if client.institution}
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Учреждение:</span>
-                    <span class="font-medium">{client.institution.name}</span>
+                    <span class="text-stone-500">Учреждение</span>
+                    <span class="font-medium text-stone-700">{client.institution.name}</span>
                 </div>
             {/if}
-            <div class="flex justify-between border-t pt-3">
-                <span class="text-gray-600">Баланс:</span>
-                <span class="font-bold text-green-600">{client.available_bonuses} бонусов</span>
+            <div class="flex justify-between border-t border-stone-100 pt-3">
+                <span class="text-stone-500">Баланс</span>
+                <span class="font-bold text-emerald-600">{client.available_bonuses} бонусов</span>
             </div>
         </div>
     </div>
 
     <!-- Change password -->
-    <div class="rounded-lg border bg-white p-6">
-        <h2 class="mb-4 text-lg font-semibold text-gray-900">Сменить пароль</h2>
+    <div class="rounded-2xl border border-stone-200 bg-white p-5">
+        <h2 class="mb-4 text-sm font-semibold text-stone-900">Сменить пароль</h2>
         <form onsubmit={changePassword} class="space-y-4">
             <div>
-                <label for="current_password" class="block text-sm font-medium text-gray-700">Текущий пароль</label>
+                <label for="profile-current-pw" class="mb-1.5 block text-sm font-medium text-stone-700">Текущий пароль</label>
                 <input
-                    id="current_password"
+                    id="profile-current-pw"
                     type="password"
-                    bind:value={$passwordForm.current_password}
-                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    bind:value={passwordForm.current_password}
+                    class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                 />
-                {#if $passwordForm.errors.current_password}
-                    <p class="mt-1 text-sm text-red-600">{$passwordForm.errors.current_password}</p>
+                {#if passwordForm.errors.current_password}
+                    <p class="mt-1.5 text-xs text-red-600">{passwordForm.errors.current_password}</p>
                 {/if}
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700">Новый пароль</label>
+                <label for="profile-new-pw" class="mb-1.5 block text-sm font-medium text-stone-700">Новый пароль</label>
                 <input
-                    id="password"
+                    id="profile-new-pw"
                     type="password"
-                    bind:value={$passwordForm.password}
-                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    bind:value={passwordForm.password}
+                    class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                 />
-                {#if $passwordForm.errors.password}
-                    <p class="mt-1 text-sm text-red-600">{$passwordForm.errors.password}</p>
+                {#if passwordForm.errors.password}
+                    <p class="mt-1.5 text-xs text-red-600">{passwordForm.errors.password}</p>
                 {/if}
             </div>
 
             <div>
-                <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Подтвердите пароль</label>
+                <label for="profile-confirm-pw" class="mb-1.5 block text-sm font-medium text-stone-700">Подтвердите пароль</label>
                 <input
-                    id="password_confirmation"
+                    id="profile-confirm-pw"
                     type="password"
-                    bind:value={$passwordForm.password_confirmation}
-                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    bind:value={passwordForm.password_confirmation}
+                    class="block w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 placeholder-stone-400 transition-colors focus:border-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900/5"
                 />
             </div>
 
             <button
                 type="submit"
-                disabled={$passwordForm.processing}
-                class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+                disabled={passwordForm.processing}
+                class="rounded-xl bg-stone-900 px-5 py-3 text-sm font-medium text-white transition-all hover:bg-stone-800 active:scale-[0.98] disabled:opacity-50"
             >
-                {$passwordForm.processing ? 'Сохранение...' : 'Сменить пароль'}
+                {passwordForm.processing ? 'Сохранение...' : 'Сменить пароль'}
             </button>
         </form>
     </div>

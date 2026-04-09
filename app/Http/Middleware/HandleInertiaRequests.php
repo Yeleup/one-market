@@ -2,11 +2,26 @@
 
 namespace App\Http\Middleware;
 
+use Closure;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Symfony\Component\HttpFoundation\Response;
 
 class HandleInertiaRequests extends Middleware
 {
+    /**
+     * Storefront routes use their own Inertia middleware.
+     * Skip this global one to avoid double-processing.
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        if ($request->is('storefront/*') || $request->is('storefront')) {
+            return $next($request);
+        }
+
+        return parent::handle($request, $next);
+    }
+
     /**
      * The root template that's loaded on the first page visit.
      *
