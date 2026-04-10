@@ -1,11 +1,11 @@
 {
-  "mcpServers": {
-    "laravel-boost": {
-      "command": "sh",
-      "args": [
-        "-lc",
-        "PROJECT_NAME=$(sed -n 's/^DOCKER_PROJECT_NAME=//p' .env | head -n 1 | tr -d '\\r'); exec docker compose -p \"${PROJECT_NAME:-one-market}\" --env-file .env -f docker-compose.yml -f docker-compose.override.yml exec -T workspace php artisan boost:mcp"
-      ]
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "sh",
+            "args": [
+                "-lc",
+                "PROJECT_NAME=$(sed -n 's/^DOCKER_PROJECT_NAME=//p' .env | head -n 1 | tr -d '\\r'); exec docker compose -p \"$PROJECT_NAME\" --env-file .env -f docker-compose.yml -f docker-compose.override.yml exec -T app php artisan boost:mcp"
+            ]
+        }
     }
-  }
 }

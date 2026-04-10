@@ -68,7 +68,7 @@ Laravel-проект запускается через один Docker-стек:
 По умолчанию `Makefile` работает с `.env`. Если нужен другой env-файл:
 
 ```bash
-make ENV_FILE=.env.production prod-up
+make ENV_FILE=.env.production build
 ```
 
 `Makefile` берёт Docker Compose project name из `DOCKER_PROJECT_NAME`.
@@ -77,12 +77,6 @@ make ENV_FILE=.env.production prod-up
 
 ```bash
 make down
-```
-
-или:
-
-```bash
-make prod-down
 ```
 
 ## Локальный запуск
@@ -112,7 +106,7 @@ make key-show
 ### 2. Поднять стек
 
 ```bash
-make up
+make build
 ```
 
 После старта будут доступны:
@@ -150,7 +144,7 @@ id -g
 Обычный цикл такой:
 
 ```bash
-make up
+make build
 ```
 
 Дальше просто меняй код и при необходимости смотри логи:
@@ -159,15 +153,9 @@ make up
 make logs
 ```
 
-Если нужен shell в `app`:
+## Когда локально нужен `make build`
 
-```bash
-make shell
-```
-
-## Когда локально нужен rebuild
-
-`make rebuild` нужен, если поменялось что-то инфраструктурное:
+`make build` нужен, если поменялось что-то инфраструктурное:
 
 - [Dockerfile](Dockerfile)
 - [docker-compose.yml](docker-compose.yml)
@@ -175,28 +163,12 @@ make shell
 - файлы в [docker/app](docker/app)
 - файлы в [docker/nginx](docker/nginx)
 
-Если менялся `composer.json` или `composer.lock`, rebuild не нужен. Локально зависимости ставятся прямо в `app`:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.override.yml exec app composer install
-```
-
-или:
-
-```bash
-make composer cmd="install"
-```
-
-Если менялся `package.json`, обычно нужен:
-
-```bash
-make npm-install
-```
+Если менялся `composer.json`, `composer.lock` или `package.json`, пересборка image обычно не нужна.
 
 Если менялся `.env`, достаточно заново применить compose-конфигурацию:
 
 ```bash
-make start
+make up
 ```
 
 ## Полезные локальные команды
@@ -204,19 +176,13 @@ make start
 Запуск:
 
 ```bash
-make up
+make build
 ```
 
 Запуск без пересборки:
 
 ```bash
-make start
-```
-
-Пересборка:
-
-```bash
-make rebuild
+make up
 ```
 
 Остановка:
@@ -237,40 +203,10 @@ make logs
 make ps
 ```
 
-Artisan:
+Тесты:
 
 ```bash
-make artisan cmd="about"
-```
-
-Composer:
-
-```bash
-make composer cmd="require filament/filament:\"^5.0\""
-```
-
-Миграции:
-
-```bash
-make migrate
-```
-
-Shell в контейнере:
-
-```bash
-make shell
-```
-
-Установка npm-зависимостей для локального `vite`:
-
-```bash
-make npm-install
-```
-
-Laravel Boost MCP для IDE:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.override.yml exec app php artisan boost:mcp
+make test
 ```
 
 ## Production
@@ -278,7 +214,7 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml exec app php
 Production использует только базовый compose-файл, без local override:
 
 ```bash
-make prod-up
+make build
 ```
 
 В production режиме:
@@ -313,24 +249,15 @@ DB_ROOT_PASSWORD=strong-root-password
 Если деплой делается прямо на сервере через `git pull`, рабочий сценарий такой:
 
 ```bash
-make prod-deploy
-```
-
-Это эквивалентно следующей последовательности:
-
-```bash
-git pull
-make prod-up
-make prod-migrate
-make prod-queue-restart
+make deploy
 ```
 
 Почему именно так:
 
 - `git pull` обновляет исходники на сервере
-- `make prod-up` собирает новые immutable images с новым кодом
-- `make prod-migrate` применяет миграции
-- `make prod-queue-restart` перезапускает долгоживущие queue workers на новой версии кода
+- `make build` собирает новые immutable images с новым кодом
+- `php artisan migrate --force` применяет миграции
+- `php artisan queue:restart` перезапускает долгоживущие queue workers на новой версии кода
 
 Просто `git pull` без пересборки для этой схемы недостаточен, потому что код находится внутри image.
 
@@ -339,61 +266,36 @@ make prod-queue-restart
 Запуск:
 
 ```bash
-make prod-up
+make build
 ```
 
 Запуск без пересборки:
 
 ```bash
-make prod-start
+make up
 ```
 
 Остановка:
 
 ```bash
-make prod-down
+make down
 ```
 
 Логи:
 
 ```bash
-make prod-logs
+make logs
 ```
 
 Статус:
 
 ```bash
-make prod-ps
-```
-
-Artisan:
-
-```bash
-make prod-artisan cmd="about"
-```
-
-Миграции:
-
-```bash
-make prod-migrate
-```
-
-Перезапуск очереди:
-
-```bash
-make prod-queue-restart
-```
-
-Shell в контейнере:
-
-```bash
-make prod-shell
+make ps
 ```
 
 ## Ограничения текущей схемы
 
 - Production PHP image собирается через `composer install --no-dev`, поэтому dev-only Composer пакеты в production-контейнеры не попадают.
-- Локально `app` собирается как dev-image. Если у тебя уже был старый `vendor` volume от прежней схемы, один раз обнови зависимости через `make composer cmd="install"`.
 
 ## Примечания
 

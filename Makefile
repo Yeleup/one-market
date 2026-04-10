@@ -1,46 +1,37 @@
 SHELL := /bin/bash
 
 ENV_FILE ?= .env
-DOCKER_PROJECT_NAME ?= $(strip $(shell sed -n 's/^DOCKER_PROJECT_NAME=//p' $(ENV_FILE) 2>/dev/null | head -n 1))
-DOCKER_PROJECT_NAME := $(or $(DOCKER_PROJECT_NAME),one-market)
+FILE_DOCKER_PROJECT_NAME := $(strip $(shell sed -n 's/^DOCKER_PROJECT_NAME=//p' $(ENV_FILE) 2>/dev/null | head -n 1))
+FILE_APP_ENV := $(strip $(shell sed -n 's/^APP_ENV=//p' $(ENV_FILE) 2>/dev/null | head -n 1))
+ifneq ($(origin DOCKER_PROJECT_NAME),command line)
+DOCKER_PROJECT_NAME := $(or $(FILE_DOCKER_PROJECT_NAME),one-market)
+endif
+ifneq ($(origin APP_ENV),command line)
+APP_ENV := $(FILE_APP_ENV)
+endif
 LOAD_ENV := set -a && source $(ENV_FILE) && set +a &&
 COMPOSE_BASE := docker compose -p $(DOCKER_PROJECT_NAME) --env-file $(ENV_FILE)
 LOCAL_COMPOSE := $(COMPOSE_BASE) -f docker-compose.yml -f docker-compose.override.yml
 PROD_COMPOSE := $(COMPOSE_BASE) -f docker-compose.yml
-
-cmd ?= about
-service ?= app
+IS_PRODUCTION := $(filter production,$(APP_ENV))
+ENV_COMPOSE := $(if $(IS_PRODUCTION),$(PROD_COMPOSE),$(LOCAL_COMPOSE))
+ENV_LOG_SERVICES := $(if $(IS_PRODUCTION),web app queue scheduler db,web app vite queue scheduler db)
+ENV_ENSURE_VENDOR := $(if $(IS_PRODUCTION),,ensure-vendor)
 test_args ?= --compact
 
-.PHONY: help key-show ensure-vendor up start rebuild down logs ps artisan composer shell migrate test queue-restart npm-install \
-	prod-up prod-start prod-down prod-logs prod-ps prod-artisan prod-shell \
-	prod-migrate prod-queue-restart prod-deploy
+.PHONY: help key-show ensure-vendor build up down logs ps test deploy
 
 help:
 	@printf '%s\n' \
-		'make up                  # local: build and start the full stack' \
+		'make build               # build and start using APP_ENV from .env' \
 		'make key-show            # print a generated APP_KEY without starting the stack' \
 		'make ensure-vendor       # local: install composer deps if vendor is missing' \
-		'make start               # local: start without rebuild' \
-		'make rebuild             # local: rebuild and force recreate containers' \
-		'make down                # local: stop the stack' \
-		'make logs                # local: follow logs' \
-		'make ps                  # local: show container status' \
-		'make artisan cmd="..."   # local: run artisan command in app' \
-		'make composer cmd="..."  # local: run composer command in app' \
-		'make shell               # local: open shell in app container' \
-		'make migrate             # local: run migrations' \
+		'make up                  # start without build using APP_ENV from .env' \
+		'make down                # stop the stack using APP_ENV from .env' \
+		'make logs                # follow logs using APP_ENV from .env' \
+		'make ps                  # show container status using APP_ENV from .env' \
 		'make test                # local: run tests in app container' \
-		'make npm-install         # local: install npm deps in vite container' \
-		'make prod-up             # production: build and start' \
-		'make prod-start          # production: start without rebuild' \
-		'make prod-down           # production: stop the stack' \
-		'make prod-logs           # production: follow logs' \
-		'make prod-ps             # production: show container status' \
-		'make prod-artisan cmd="..." # production: run artisan command in app' \
-		'make prod-migrate        # production: run migrations' \
-		'make prod-queue-restart  # production: restart queue workers' \
-		'make prod-deploy         # production: git pull + build + migrate + queue restart'
+		'make deploy              # git pull, build, migrate, and restart queue workers'
 
 key-show:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) run --rm --no-deps --entrypoint php app artisan key:generate --show
@@ -51,74 +42,26 @@ ensure-vendor:
 		$(LOAD_ENV) $(LOCAL_COMPOSE) run --rm --entrypoint sh app -lc 'composer install --no-interaction --prefer-dist --no-progress'; \
 	fi
 
-up: ensure-vendor
-	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --build --remove-orphans
+build: $(ENV_ENSURE_VENDOR)
+	$(LOAD_ENV) $(ENV_COMPOSE) up -d --build --remove-orphans
 
-start: ensure-vendor
-	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --remove-orphans
-
-rebuild: ensure-vendor
-	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --build --force-recreate --remove-orphans
+up: $(ENV_ENSURE_VENDOR)
+	$(LOAD_ENV) $(ENV_COMPOSE) up -d --remove-orphans
 
 down:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) down --remove-orphans
+	$(LOAD_ENV) $(ENV_COMPOSE) down --remove-orphans
 
 logs:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) logs -f web app vite queue scheduler db
+	$(LOAD_ENV) $(ENV_COMPOSE) logs -f $(ENV_LOG_SERVICES)
 
 ps:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) ps
-
-artisan:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan $(cmd)
-
-composer:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app composer $(cmd)
-
-shell:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) exec $(service) sh
-
-migrate:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan migrate --force
+	$(LOAD_ENV) $(ENV_COMPOSE) ps
 
 test:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan test $(test_args)
 
-queue-restart:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan queue:restart
-
-npm-install:
-	$(LOAD_ENV) $(LOCAL_COMPOSE) exec vite npm install --no-package-lock
-
-prod-up:
-	$(LOAD_ENV) $(PROD_COMPOSE) up -d --build --remove-orphans
-
-prod-start:
-	$(LOAD_ENV) $(PROD_COMPOSE) up -d --remove-orphans
-
-prod-down:
-	$(LOAD_ENV) $(PROD_COMPOSE) down --remove-orphans
-
-prod-logs:
-	$(LOAD_ENV) $(PROD_COMPOSE) logs -f web app queue scheduler db
-
-prod-ps:
-	$(LOAD_ENV) $(PROD_COMPOSE) ps
-
-prod-artisan:
-	$(LOAD_ENV) $(PROD_COMPOSE) exec app php artisan $(cmd)
-
-prod-shell:
-	$(LOAD_ENV) $(PROD_COMPOSE) exec $(service) sh
-
-prod-migrate:
-	$(LOAD_ENV) $(PROD_COMPOSE) exec app php artisan migrate --force
-
-prod-queue-restart:
-	$(LOAD_ENV) $(PROD_COMPOSE) exec app php artisan queue:restart
-
-prod-deploy:
+deploy:
 	git pull
-	$(LOAD_ENV) $(PROD_COMPOSE) up -d --build --remove-orphans
-	$(LOAD_ENV) $(PROD_COMPOSE) exec app php artisan migrate --force
-	$(LOAD_ENV) $(PROD_COMPOSE) exec app php artisan queue:restart
+	$(LOAD_ENV) $(ENV_COMPOSE) up -d --build --remove-orphans
+	$(LOAD_ENV) $(ENV_COMPOSE) exec app php artisan migrate --force
+	$(LOAD_ENV) $(ENV_COMPOSE) exec app php artisan queue:restart
