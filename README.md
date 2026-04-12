@@ -191,6 +191,12 @@ make up
 make down
 ```
 
+Остановка с удалением volumes, включая БД:
+
+```bash
+make down-volumes
+```
+
 Логи:
 
 ```bash
@@ -201,6 +207,18 @@ make logs
 
 ```bash
 make ps
+```
+
+Экспорт БД в `docker/db/dump.sql.gz`:
+
+```bash
+make dump
+```
+
+Импорт БД из `docker/db/dump.sql.gz`:
+
+```bash
+make import
 ```
 
 Тесты:
@@ -281,6 +299,12 @@ make up
 make down
 ```
 
+Остановка с удалением volumes, включая БД:
+
+```bash
+make down-volumes
+```
+
 Логи:
 
 ```bash
@@ -291,6 +315,18 @@ make logs
 
 ```bash
 make ps
+```
+
+Экспорт БД в `docker/db/dump.sql.gz`:
+
+```bash
+make dump
+```
+
+Импорт БД из `docker/db/dump.sql.gz`:
+
+```bash
+make import
 ```
 
 ## Ограничения текущей схемы

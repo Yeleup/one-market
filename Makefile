@@ -18,8 +18,9 @@ ENV_COMPOSE := $(if $(IS_PRODUCTION),$(PROD_COMPOSE),$(LOCAL_COMPOSE))
 ENV_LOG_SERVICES := $(if $(IS_PRODUCTION),web app queue scheduler db,web app vite queue scheduler db)
 ENV_ENSURE_VENDOR := $(if $(IS_PRODUCTION),,ensure-vendor)
 test_args ?= --compact
+dump_file ?= docker/db/dump.sql.gz
 
-.PHONY: help key-show ensure-vendor build up down logs ps test deploy
+.PHONY: help key-show ensure-vendor build up down down-volumes logs ps dump import test deploy
 
 help:
 	@printf '%s\n' \
@@ -28,8 +29,11 @@ help:
 		'make ensure-vendor       # local: install composer deps if vendor is missing' \
 		'make up                  # start without build using APP_ENV from .env' \
 		'make down                # stop the stack using APP_ENV from .env' \
+		'make down-volumes        # stop the stack and delete named volumes, including the database' \
 		'make logs                # follow logs using APP_ENV from .env' \
 		'make ps                  # show container status using APP_ENV from .env' \
+		'make dump                # export database to docker/db/dump.sql.gz' \
+		'make import              # import database from docker/db/dump.sql.gz' \
 		'make test                # local: run tests in app container' \
 		'make deploy              # git pull, build, migrate, and restart queue workers'
 
@@ -51,11 +55,22 @@ up: $(ENV_ENSURE_VENDOR)
 down:
 	$(LOAD_ENV) $(ENV_COMPOSE) down --remove-orphans
 
+down-volumes:
+	$(LOAD_ENV) $(ENV_COMPOSE) down -v --remove-orphans
+
 logs:
 	$(LOAD_ENV) $(ENV_COMPOSE) logs -f $(ENV_LOG_SERVICES)
 
 ps:
 	$(LOAD_ENV) $(ENV_COMPOSE) ps
+
+dump:
+	@mkdir -p "$(dir $(dump_file))"
+	$(LOAD_ENV) $(ENV_COMPOSE) exec -T db env MYSQL_PWD="$$DB_PASSWORD" mariadb-dump --single-transaction --routines --triggers -u"$$DB_USERNAME" "$$DB_DATABASE" | gzip > "$(dump_file)"
+
+import:
+	@test -f "$(dump_file)" || (echo 'Dump file not found: $(dump_file)' >&2; exit 1)
+	$(LOAD_ENV) gunzip -c "$(dump_file)" | $(ENV_COMPOSE) exec -T db env MYSQL_PWD="$$DB_PASSWORD" mariadb -u"$$DB_USERNAME" "$$DB_DATABASE"
 
 test:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan test $(test_args)
