@@ -1,6 +1,7 @@
 FROM php:8.4-fpm-alpine AS php-base
 
 RUN apk add --no-cache \
+        $PHPIZE_DEPS \
         fcgi \
         freetype-dev \
         git \
@@ -14,7 +15,10 @@ RUN apk add --no-cache \
         wget \
         zip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install bcmath gd intl mbstring opcache pcntl pdo_mysql zip
+    && docker-php-ext-install bcmath gd intl mbstring opcache pcntl pdo_mysql zip \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del --no-network $PHPIZE_DEPS
 
 COPY docker/app/php-fpm.conf /usr/local/etc/php-fpm.d/zz-app.conf
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/zz-app.ini

@@ -5,15 +5,19 @@ x-app-environment: &app-environment
   APP_NAME: ${APP_NAME:-Laravel}
   APP_OPTIMIZE: ${APP_OPTIMIZE:-1}
   APP_URL: ${APP_URL:-http://localhost:8000}
-  CACHE_STORE: ${CACHE_STORE:-database}
+  CACHE_STORE: ${CACHE_STORE:-redis}
   DB_CONNECTION: ${DB_CONNECTION:-mariadb}
   DB_DATABASE: ${DB_DATABASE:-one_market}
   DB_HOST: ${DB_HOST:-db}
   DB_PASSWORD: ${DB_PASSWORD:-laravel}
   DB_PORT: ${DB_PORT:-3306}
   DB_USERNAME: ${DB_USERNAME:-laravel}
-  QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
-  SESSION_DRIVER: ${SESSION_DRIVER:-database}
+  QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+  REDIS_CLIENT: ${REDIS_CLIENT:-phpredis}
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  SESSION_DRIVER: ${SESSION_DRIVER:-redis}
   WAIT_FOR_DATABASE: ${WAIT_FOR_DATABASE:-1}
 
 x-app-service: &app-service
@@ -21,6 +25,8 @@ x-app-service: &app-service
     <<: *app-environment
   depends_on:
     db:
+      condition: service_healthy
+    redis:
       condition: service_healthy
   restart: unless-stopped
   volumes:
@@ -94,6 +100,19 @@ services:
       - ./docker/db/init:/docker-entrypoint-initdb.d:ro
       - mariadb-data:/var/lib/mysql
 
+  redis:
+    image: redis:7.4.8-alpine
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
 volumes:
   mariadb-data:
+  redis-data:
   storage-public:
