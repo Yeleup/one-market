@@ -1,29 +1,40 @@
-FROM php:8.4-fpm-alpine AS php-base
+FROM dunglas/frankenphp:1-php8.4-alpine AS php-base
 
-RUN apk add --no-cache \
-        $PHPIZE_DEPS \
-        fcgi \
-        freetype-dev \
-        git \
-        icu-dev \
-        libjpeg-turbo-dev \
-        libpng-dev \
-        libwebp-dev \
-        libzip-dev \
-        oniguruma-dev \
-        unzip \
-        wget \
-        zip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install bcmath gd intl mbstring opcache pcntl pdo_mysql zip \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
-    && apk del --no-network $PHPIZE_DEPS
+RUN install-php-extensions \
+        bcmath \
+        gd \
+        intl \
+        mbstring \
+        opcache \
+        pcntl \
+        pdo_mysql \
+        redis \
+        zip
 
-COPY docker/app/php-fpm.conf /usr/local/etc/php-fpm.d/zz-app.conf
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/zz-app.ini
 
 WORKDIR /var/www/html
+
+FROM php-base AS composer-base
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
+RUN apk add --no-cache \
+        git \
+        unzip \
+        zip
+
+FROM composer-base AS vendor-prod
+
+COPY composer.json composer.lock ./
+
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-scripts
 
 FROM node:22-alpine AS frontend
 
@@ -31,7 +42,7 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY resources ./resources
 COPY public ./public
@@ -43,17 +54,8 @@ FROM php-base AS app
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
-COPY composer.json composer.lock ./
-
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --no-progress \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-scripts
-
 COPY . .
+COPY --from=vendor-prod /var/www/html/vendor /var/www/html/vendor
 
 RUN mkdir -p \
         bootstrap/cache \
@@ -62,20 +64,21 @@ RUN mkdir -p \
         storage/framework/sessions \
         storage/framework/views \
         storage/logs \
-    && composer install \
-    --no-dev \
-    --no-interaction \
-    --no-progress \
-    --prefer-dist \
-    --optimize-autoloader \
+    && composer dump-autoload \
+        --no-dev \
+        --no-interaction \
+        --no-scripts \
+        --optimize \
+    && php artisan package:discover --ansi \
+    && php artisan filament:upgrade \
     && rm /usr/local/bin/composer
 
 COPY --from=frontend /app/public/build /var/www/html/public/build
 COPY docker/app/entrypoint.sh /usr/local/bin/docker-entrypoint
-COPY docker/app/healthcheck-fpm.sh /usr/local/bin/docker-healthcheck-fpm
+COPY docker/app/healthcheck-http.sh /usr/local/bin/docker-healthcheck-http
 
 RUN chmod +x /usr/local/bin/docker-entrypoint \
-    /usr/local/bin/docker-healthcheck-fpm \
+    /usr/local/bin/docker-healthcheck-http \
     && mkdir -p \
         bootstrap/cache \
         storage/app/public \
@@ -85,69 +88,21 @@ RUN chmod +x /usr/local/bin/docker-entrypoint \
         storage/logs \
     && ln -sfn /var/www/html/storage/app/public /var/www/html/public/storage
 
-EXPOSE 9000
+EXPOSE 8000
 
 ENTRYPOINT ["docker-entrypoint"]
-CMD ["php-fpm", "-F"]
+CMD ["sh", "-lc", "exec php artisan octane:frankenphp --host=0.0.0.0 --port=8000 --admin-port=${OCTANE_ADMIN_PORT:-2019} --workers=${OCTANE_WORKERS:-auto} --max-requests=${OCTANE_MAX_REQUESTS:-500}"]
 
 FROM php-base AS app-dev
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
-
-COPY composer.json composer.lock ./
-
-RUN composer install \
-    --no-interaction \
-    --no-progress \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-scripts
-
-COPY . .
-
-RUN mkdir -p \
-        bootstrap/cache \
-        storage/app/public \
-        storage/framework/cache \
-        storage/framework/sessions \
-        storage/framework/views \
-        storage/logs \
-    && composer install \
-    --no-interaction \
-    --no-progress \
-    --prefer-dist \
-    --optimize-autoloader
-
 COPY docker/app/entrypoint.sh /usr/local/bin/docker-entrypoint
-COPY docker/app/healthcheck-fpm.sh /usr/local/bin/docker-healthcheck-fpm
+COPY docker/app/healthcheck-http.sh /usr/local/bin/docker-healthcheck-http
 
 RUN chmod +x /usr/local/bin/docker-entrypoint \
-    /usr/local/bin/docker-healthcheck-fpm \
-    && mkdir -p \
-        bootstrap/cache \
-        storage/app/public \
-        storage/framework/cache \
-        storage/framework/sessions \
-        storage/framework/views \
-        storage/logs \
-    && chown -R 1000:1000 /var/www/html/vendor \
-    && chmod -R a+rwX bootstrap/cache \
-    && ln -sfn /var/www/html/storage/app/public /var/www/html/public/storage
+    /usr/local/bin/docker-healthcheck-http
 
-EXPOSE 9000
+EXPOSE 8000
 
 ENTRYPOINT ["docker-entrypoint"]
-CMD ["php-fpm", "-F"]
-
-FROM nginx:1.27-alpine AS web
-
-WORKDIR /var/www/html
-
-COPY public ./public
-COPY --from=frontend /app/public/build /var/www/html/public/build
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
-
-RUN mkdir -p /var/www/html/storage/app/public \
-    && ln -sfn /var/www/html/storage/app/public /var/www/html/public/storage
-
-EXPOSE 80
+CMD ["sh", "-lc", "exec php artisan octane:frankenphp --host=0.0.0.0 --port=8000 --admin-port=${OCTANE_ADMIN_PORT:-2019} --workers=${OCTANE_WORKERS:-auto} --max-requests=${OCTANE_MAX_REQUESTS:-500}"]

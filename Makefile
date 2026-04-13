@@ -15,18 +15,20 @@ LOCAL_COMPOSE := $(COMPOSE_BASE) -f docker-compose.yml -f docker-compose.overrid
 PROD_COMPOSE := $(COMPOSE_BASE) -f docker-compose.yml
 IS_PRODUCTION := $(filter production,$(APP_ENV))
 ENV_COMPOSE := $(if $(IS_PRODUCTION),$(PROD_COMPOSE),$(LOCAL_COMPOSE))
-ENV_LOG_SERVICES := $(if $(IS_PRODUCTION),web app queue scheduler db,web app vite queue scheduler db)
+ENV_LOG_SERVICES := $(if $(IS_PRODUCTION),app queue scheduler db,app vite queue scheduler db)
 ENV_ENSURE_VENDOR := $(if $(IS_PRODUCTION),,ensure-vendor)
+ENV_ENSURE_NODE_MODULES := $(if $(IS_PRODUCTION),,ensure-node-modules)
 test_args ?= --compact
 dump_file ?= docker/db/dump.sql.gz
 
-.PHONY: help key-show ensure-vendor build up down down-volumes logs ps dump import test deploy
+.PHONY: help key-show ensure-vendor ensure-node-modules build up down down-volumes logs ps dump import test deploy
 
 help:
 	@printf '%s\n' \
 		'make build               # build and start using APP_ENV from .env' \
 		'make key-show            # print a generated APP_KEY without starting the stack' \
 		'make ensure-vendor       # local: install composer deps if vendor is missing' \
+		'make ensure-node-modules # local: install node deps in the vite volume if missing' \
 		'make up                  # start without build using APP_ENV from .env' \
 		'make down                # stop the stack using APP_ENV from .env' \
 		'make down-volumes        # stop the stack and delete named volumes, including the database' \
@@ -46,10 +48,17 @@ ensure-vendor:
 		$(LOAD_ENV) $(LOCAL_COMPOSE) run --rm --entrypoint sh app -lc 'composer install --no-interaction --prefer-dist --no-progress'; \
 	fi
 
-build: $(ENV_ENSURE_VENDOR)
+ensure-node-modules:
+	@$(LOAD_ENV) $(LOCAL_COMPOSE) run --rm --no-deps --entrypoint sh vite -lc '\
+		if [ ! -x node_modules/.bin/vite ]; then \
+			echo "node_modules is missing. Installing Node dependencies..."; \
+			npm ci --no-fund --no-audit; \
+		fi'
+
+build: $(ENV_ENSURE_VENDOR) $(ENV_ENSURE_NODE_MODULES)
 	$(LOAD_ENV) $(ENV_COMPOSE) up -d --build --remove-orphans
 
-up: $(ENV_ENSURE_VENDOR)
+up: $(ENV_ENSURE_VENDOR) $(ENV_ENSURE_NODE_MODULES)
 	$(LOAD_ENV) $(ENV_COMPOSE) up -d --remove-orphans
 
 down:

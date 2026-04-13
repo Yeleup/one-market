@@ -21,22 +21,19 @@ Laravel-проект запускается через один Docker-стек:
 
 ## Структура Docker-файлов
 
-- [Dockerfile](Dockerfile) — сборка `app` и `web`
+- [Dockerfile](Dockerfile) — сборка `app`
 - [docker-compose.yml](docker-compose.yml) — базовый стек
 - [docker-compose.override.yml](docker-compose.override.yml) — локальные отличия
 - [docker/app/php.ini](docker/app/php.ini) — базовые PHP настройки
 - [docker/app/php.local.ini](docker/app/php.local.ini) — локальные override для PHP
-- [docker/app/php-fpm.conf](docker/app/php-fpm.conf) — конфиг `php-fpm`
 - [docker/app/entrypoint.sh](docker/app/entrypoint.sh) — подготовка приложения, ожидание БД, миграции, optimize
-- [docker/app/healthcheck-fpm.sh](docker/app/healthcheck-fpm.sh) — healthcheck `app`
-- [docker/nginx/default.conf](docker/nginx/default.conf) — конфиг `nginx`
+- [docker/app/healthcheck-http.sh](docker/app/healthcheck-http.sh) — HTTP healthcheck `app`
 
 ## Что поднимается
 
 Всегда:
 
-- `app` — `php-fpm` с Laravel
-- `web` — `nginx`
+- `app` — Laravel на `FrankenPHP`
 - `queue` — Laravel queue worker
 - `scheduler` — Laravel scheduler loop
 - `db` — `mariadb:11.8`
@@ -121,7 +118,7 @@ make build
 make ps
 ```
 
-Контейнеры `app` и `web` должны быть в статусе `healthy`.
+Контейнер `app` должен быть в статусе `healthy`.
 
 ## Как работать локально
 
@@ -161,7 +158,6 @@ make logs
 - [docker-compose.yml](docker-compose.yml)
 - [docker-compose.override.yml](docker-compose.override.yml)
 - файлы в [docker/app](docker/app)
-- файлы в [docker/nginx](docker/nginx)
 
 Если менялся `composer.json`, `composer.lock` или `package.json`, пересборка image обычно не нужна.
 
@@ -237,9 +233,8 @@ make build
 
 В production режиме:
 
-- `web` стартует только после `app healthy`
-- `app` ждёт БД и проходит healthcheck через `php-fpm ping` (`/fpm-ping`)
-- `web` проходит HTTP healthcheck через Laravel endpoint `/up`
+- `app` обслуживает HTTP сам через `FrankenPHP`
+- `app` ждёт БД и проходит HTTP healthcheck через Laravel endpoint `/up`
 - image собирается с `composer install --no-dev`
 - при `APP_OPTIMIZE=1` выполняется `php artisan optimize`
 - MariaDB наружу не публикуется
@@ -335,7 +330,7 @@ make import
 
 ## Примечания
 
-- `app` healthcheck не использует `/up`; `/up` относится к HTTP-проверке `web`.
+- `app` healthcheck использует встроенный Laravel endpoint `/up`.
 - Laravel рекомендует держать `APP_DEBUG=false` в production.
 - После релиза queue workers нужно перезапускать через `php artisan queue:restart`, потому что это долгоживущие процессы.
 - Все доступные команды можно посмотреть через:

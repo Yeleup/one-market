@@ -10,7 +10,6 @@ x-local-php-service: &local-php-service
     <<: *local-php-environment
   volumes:
     - .:/var/www/html
-    - ./storage/app/public:/var/www/html/storage/app/public
     - ./docker/app/php.local.ini:/usr/local/etc/php/conf.d/zz-local.ini:ro
 
 services:
@@ -20,12 +19,9 @@ services:
     <<: *local-php-service
     environment:
       <<: *local-php-environment
+      OCTANE_WORKERS: ${OCTANE_WORKERS:-1}
+      OCTANE_MAX_REQUESTS: ${OCTANE_MAX_REQUESTS:-1}
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
-
-  web:
-    volumes:
-      - .:/var/www/html:ro
-      - ./storage/app/public:/var/www/html/storage/app/public:ro
 
   queue:
     <<: *local-php-service
@@ -35,8 +31,12 @@ services:
     <<: *local-php-service
 
   db:
+    environment:
+      MARIADB_TEST_DATABASE: ${MARIADB_TEST_DATABASE:-one_market_testing}
     ports:
       - '${FORWARD_DB_PORT:-3307}:3306'
+    volumes:
+      - ./docker/db/init:/docker-entrypoint-initdb.d:ro
 
   vite:
     image: node:22-alpine
@@ -44,9 +44,7 @@ services:
     command:
       - sh
       - -lc
-      - |
-        [ -x node_modules/.bin/vite ] || npm install --no-package-lock
-        npm run dev -- --host 0.0.0.0 --port ${VITE_PORT:-5173}
+      - npm run dev -- --host 0.0.0.0 --port ${VITE_PORT:-5173}
     environment:
       APP_URL: ${APP_URL:-http://localhost:8000}
       VITE_PORT: ${VITE_PORT:-5173}

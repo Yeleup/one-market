@@ -9,7 +9,7 @@ use Filament\Schemas\Schema;
 use Livewire\Component as LivewireComponent;
 
 it('uses a select tree for the product category field', function (): void {
-    $schema = ProductResource::form(Schema::make(new ProductResourceSchemaHost));
+    $schema = ProductResource::form(Schema::make(makeProductResourceSchemaHost()));
 
     $categoryField = collect(getSchemaComponents($schema->getComponents()))
         ->first(
@@ -20,19 +20,22 @@ it('uses a select tree for the product category field', function (): void {
     expect($categoryField)->toBeInstanceOf(SelectTree::class);
 });
 
-class ProductResourceSchemaHost extends LivewireComponent implements HasSchemas
+function makeProductResourceSchemaHost(): HasSchemas
 {
-    use InteractsWithSchemas;
-
-    public function render(): string
+    return new class extends LivewireComponent implements HasSchemas
     {
-        return '';
-    }
+        use InteractsWithSchemas;
 
-    public function getDefaultTestingSchemaName(): ?string
-    {
-        return null;
-    }
+        public function render(): string
+        {
+            return '';
+        }
+
+        public function getDefaultTestingSchemaName(): ?string
+        {
+            return null;
+        }
+    };
 }
 
 /**

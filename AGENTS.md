@@ -13,6 +13,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - filament/filament (FILAMENT) - v5
 - inertiajs/inertia-laravel (INERTIA_LARAVEL) - v3
 - laravel/framework (LARAVEL) - v13
+- laravel/octane (OCTANE) - v2
 - laravel/prompts (PROMPTS) - v0
 - livewire/livewire (LIVEWIRE) - v4
 - laravel/boost (BOOST) - v2
@@ -92,14 +93,6 @@ This project has domain-specific skills available. You MUST activate the relevan
 - Read configuration values using dot notation: `php artisan config:show app.name`, `php artisan config:show database.default`. Or read config files directly from the `config/` directory.
 - To check environment variables, read the `.env` file directly.
 
-## PHP Execution
-
-Do not run project PHP commands on the host. Always execute PHP, Artisan, Composer, Pint, Pest, PHPUnit, and project PHP scripts inside the Docker `app` container. Prefer Makefile commands when available.
-
-## Node Execution
-
-Do not run project Node or npm commands on the host. Always execute npm, Vite, and project Node scripts inside the Docker Compose `vite` service. Prefer Makefile commands when available.
-
 ## Tinker
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
@@ -175,14 +168,32 @@ Do not run project Node or npm commands on the host. Always execute npm, Vite, a
 
 ## Vite Error
 
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, run the frontend build or Vite dev server inside the Docker Compose `vite` service, or ask the user to run it there.
+- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
+
+=== octane/core rules ===
+
+# Octane
+
+- Octane boots the application once and reuses it across requests, so singletons persist between requests.
+- The Laravel container's `scoped` method may be used as a safe alternative to `singleton`.
+- Never inject the container, request, or config repository into a singleton's constructor; use a resolver closure or `bind()` instead:
+
+```php
+// Bad
+$this->app->singleton(Service::class, fn (Application $app) => new Service($app['request']));
+
+// Good
+$this->app->singleton(Service::class, fn () => new Service(fn () => request()));
+```
+
+- Never append to static properties, as they accumulate in memory across requests.
 
 === pint/core rules ===
 
 # Laravel Pint Code Formatter
 
-- If you have modified any PHP files, you must run Pint inside the Docker `app` container before finalizing changes to ensure your code matches the project's expected style.
-- Do not run Pint in test mode, simply run it to fix any formatting issues.
+- If you have modified any PHP files, you must run `vendor/bin/pint --dirty --format agent` before finalizing changes to ensure your code matches the project's expected style.
+- Do not run `vendor/bin/pint --test --format agent`, simply run `vendor/bin/pint --format agent` to fix any formatting issues.
 
 === pest/core rules ===
 

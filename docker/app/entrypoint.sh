@@ -53,7 +53,6 @@ prepare_application() {
     fi
 
     ln -sfn /var/www/html/storage/app/public /var/www/html/public/storage
-    php artisan storage:link --no-interaction >/dev/null 2>&1 || true
 }
 
 wait_for_database() {
@@ -108,10 +107,7 @@ run_migrations_if_needed() {
 optimize_application_if_needed() {
     if [ "${APP_OPTIMIZE:-0}" = "1" ]; then
         php artisan optimize --no-interaction
-        return
     fi
-
-    php artisan optimize:clear --no-interaction >/dev/null 2>&1 || true
 }
 
 ensure_application_key
