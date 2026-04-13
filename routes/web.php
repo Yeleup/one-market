@@ -3,6 +3,7 @@
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\OrderPdfController;
 use App\Http\Controllers\Storefront;
+use App\Http\Middleware\SetAdminLocaleFromDefaultLanguage;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/img/{path}', [ImageController::class, 'show'])
@@ -11,6 +12,7 @@ Route::get('/img/{path}', [ImageController::class, 'show'])
 
 Route::middleware('auth')
     ->get('/orders/{order}/pdf', OrderPdfController::class)
+    ->middleware(SetAdminLocaleFromDefaultLanguage::class)
     ->name('orders.pdf');
 
 /*
