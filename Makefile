@@ -21,7 +21,7 @@ ENV_ENSURE_NODE_MODULES := $(if $(IS_PRODUCTION),,ensure-node-modules)
 test_args ?= --compact
 dump_file ?= docker/db/dump.sql.gz
 
-.PHONY: help key-show ensure-vendor ensure-node-modules build up down down-volumes logs ps dump import test deploy
+.PHONY: help key-show ensure-vendor ensure-node-modules build up down down-volumes logs ps dump import test octane-status octane-reload deploy
 
 help:
 	@printf '%s\n' \
@@ -37,6 +37,8 @@ help:
 		'make dump                # export database to docker/db/dump.sql.gz' \
 		'make import              # import database from docker/db/dump.sql.gz' \
 		'make test                # local: run tests in app container' \
+		'make octane-status       # show Octane server status in the app container' \
+		'make octane-reload       # gracefully reload Octane workers in the app container' \
 		'make deploy              # git pull, build, migrate, and restart queue workers'
 
 key-show:
@@ -83,6 +85,12 @@ import:
 
 test:
 	$(LOAD_ENV) $(LOCAL_COMPOSE) exec app php artisan test $(test_args)
+
+octane-status:
+	$(LOAD_ENV) $(ENV_COMPOSE) exec app php artisan octane:status
+
+octane-reload:
+	$(LOAD_ENV) $(ENV_COMPOSE) exec app php artisan octane:reload
 
 deploy:
 	git pull
