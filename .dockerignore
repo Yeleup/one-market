@@ -10,19 +10,29 @@
 
 node_modules
 vendor
+auth.json
 
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+public/build
 public/hot
+public/storage
 
-storage/logs
-storage/framework/cache
-storage/framework/sessions
-storage/framework/testing
-storage/framework/views
-storage/app/public/cache
+storage/pail
+storage/app/*
+!storage/app/.gitignore
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/testing/*
+!storage/framework/testing/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
 
 bootstrap/cache/*.php
 
