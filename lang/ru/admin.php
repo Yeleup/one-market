@@ -156,6 +156,21 @@ return [
                 'recipient_from_client' => 'Выберите клиента, и данные получателя заполнятся из его карточки.',
                 'status_not_changed' => 'Ещё не менялся.',
             ],
+            'purchase_report' => [
+                'title' => 'Отчёт для закупки товаров',
+                'generated_at' => 'Сформировано',
+                'orders_included' => 'Заказы',
+                'uncategorized' => 'Без категории',
+                'columns' => [
+                    'product' => 'Товар',
+                    'total' => 'Всего',
+                    'weight' => 'Вес',
+                    'by_orders' => 'По заказам клиентов',
+                ],
+                'category_total' => 'Итого по категории',
+                'grand_total' => 'Итого позиций',
+                'empty' => 'В выбранных заказах нет позиций.',
+            ],
         ],
         'product' => [
             'navigation_label' => 'Товары',
@@ -201,6 +216,7 @@ return [
             'cancel' => 'Отменить',
             'move_to_delivered' => 'Доставлено',
             'move_to_processing' => 'В обработку',
+            'purchase_report' => 'Отчёт для закупки',
             'notifications' => [
                 'cancelled' => 'Заказ отменён.',
                 'delivered' => 'Заказ отмечен как доставленный.',

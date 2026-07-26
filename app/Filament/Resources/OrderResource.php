@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Actions\Orders\BuildPurchaseReportAction;
 use App\Actions\Orders\DeleteOrderAction;
 use App\Enums\OrderSource;
 use App\Enums\OrderStatus;
@@ -15,6 +16,8 @@ use App\Models\Client;
 use App\Models\Institution;
 use App\Models\Order;
 use BackedEnum;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Placeholder;
@@ -30,6 +33,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
 class OrderResource extends Resource
@@ -362,6 +367,9 @@ class OrderResource extends Resource
                 EditAction::make(),
                 static::makeDeleteAction(),
             ])
+            ->toolbarActions([
+                static::makePurchaseReportBulkAction(),
+            ])
             ->recordUrl(fn (Order $record): string => static::getUrl('edit', ['record' => $record]));
     }
 
@@ -384,6 +392,34 @@ class OrderResource extends Resource
                 app(DeleteOrderAction::class)->handle($record);
 
                 return true;
+            });
+    }
+
+    public static function makePurchaseReportBulkAction(): BulkAction
+    {
+        return BulkAction::make('purchaseReport')
+            ->label(__('admin.actions.order.purchase_report'))
+            ->icon('heroicon-o-shopping-cart')
+            ->color('primary')
+            ->deselectRecordsAfterCompletion()
+            ->action(function (Collection $records): StreamedResponse {
+                $records->load(['client', 'items.product.category.translations']);
+
+                $report = app(BuildPurchaseReportAction::class)->handle($records);
+
+                $pdf = Pdf::loadView('pdf.orders.purchase-report', [
+                    'report' => $report,
+                    'orders' => $records,
+                    'generatedAt' => now(),
+                ]);
+
+                $filename = 'purchase-report-'.now()->format('Y-m-d').'.pdf';
+
+                return response()->streamDownload(
+                    fn () => print ($pdf->output()),
+                    $filename,
+                    ['Content-Type' => 'application/pdf'],
+                );
             });
     }
 

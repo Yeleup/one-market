@@ -156,6 +156,21 @@ return [
                 'recipient_from_client' => 'Клиентті таңдаңыз, сонда алушы деректері оның картасынан толтырылады.',
                 'status_not_changed' => 'Әлі өзгертілмеген.',
             ],
+            'purchase_report' => [
+                'title' => 'Тауар сатып алуға арналған есеп',
+                'generated_at' => 'Жасалды',
+                'orders_included' => 'Тапсырыстар',
+                'uncategorized' => 'Санатсыз',
+                'columns' => [
+                    'product' => 'Тауар',
+                    'total' => 'Барлығы',
+                    'weight' => 'Салмағы',
+                    'by_orders' => 'Клиент тапсырыстары бойынша',
+                ],
+                'category_total' => 'Санат бойынша жиыны',
+                'grand_total' => 'Позициялар жиыны',
+                'empty' => 'Таңдалған тапсырыстарда позициялар жоқ.',
+            ],
         ],
         'product' => [
             'navigation_label' => 'Тауарлар',
@@ -201,6 +216,7 @@ return [
             'cancel' => 'Болдырмау',
             'move_to_delivered' => 'Жеткізілді',
             'move_to_processing' => 'Өңдеуге жіберу',
+            'purchase_report' => 'Сатып алу есебі',
             'notifications' => [
                 'cancelled' => 'Тапсырыс болдырылды.',
                 'delivered' => 'Тапсырыс жеткізілген деп белгіленді.',

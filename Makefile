@@ -135,20 +135,13 @@ import:
 	$(LOAD_ENV) gunzip -c "$(dump_file)" | $(ENV_COMPOSE) exec -T db env MYSQL_PWD="$$DB_PASSWORD" mariadb -u"$$DB_USERNAME" "$$DB_DATABASE"
 
 dump-media:
-	@test -d "$(storage_dir)" || (echo 'Storage directory not found: $(storage_dir)' >&2; exit 1)
 	@mkdir -p "$(dir $(storage_dump_file))"
-	tar -czf "$(storage_dump_file)" "$(storage_dir)"
+	$(LOAD_ENV) $(ENV_COMPOSE) exec -T app tar --exclude='storage/app/private/livewire-tmp' -cf - -C /var/www/html "$(storage_dir)" | gzip > "$(storage_dump_file)"
 
 import-media:
 	@test -f "$(storage_dump_file)" || (echo 'Storage archive not found: $(storage_dump_file)' >&2; exit 1)
-	@tmp_storage_dir="$$(mktemp -d)"; \
-	trap 'rm -rf "$$tmp_storage_dir"' EXIT; \
-	tar -xzf "$(storage_dump_file)" -C "$$tmp_storage_dir"; \
-	test -d "$$tmp_storage_dir/$(storage_dir)" || (echo 'Storage archive does not contain $(storage_dir)' >&2; exit 1); \
-	rm -rf "$(storage_dir)"; \
-	mkdir -p "$(dir $(storage_dir))"; \
-	mv "$$tmp_storage_dir/$(storage_dir)" "$(storage_dir)"; \
-	trap - EXIT
+	@gzip -t "$(storage_dump_file)" || (echo 'Invalid gzip archive: $(storage_dump_file)' >&2; exit 1)
+	$(LOAD_ENV) gunzip -c "$(storage_dump_file)" | $(ENV_COMPOSE) exec -T app tar -xf - -C /var/www/html
 
 test:
 	@test "$(APP_ENV)" != "production" || (echo 'Refusing to run tests in production.' >&2; exit 1)

@@ -156,6 +156,21 @@ return [
                 'recipient_from_client' => 'Select a client, and the recipient data will be filled from the client profile.',
                 'status_not_changed' => 'Has not changed yet.',
             ],
+            'purchase_report' => [
+                'title' => 'Purchase report',
+                'generated_at' => 'Generated at',
+                'orders_included' => 'Orders',
+                'uncategorized' => 'Uncategorized',
+                'columns' => [
+                    'product' => 'Product',
+                    'total' => 'Total',
+                    'weight' => 'Weight',
+                    'by_orders' => 'By client orders',
+                ],
+                'category_total' => 'Category total',
+                'grand_total' => 'Total items',
+                'empty' => 'The selected orders have no items.',
+            ],
         ],
         'product' => [
             'navigation_label' => 'Products',
@@ -201,6 +216,7 @@ return [
             'cancel' => 'Cancel',
             'move_to_delivered' => 'Delivered',
             'move_to_processing' => 'Move to processing',
+            'purchase_report' => 'Purchase report',
             'notifications' => [
                 'cancelled' => 'Order cancelled.',
                 'delivered' => 'Order marked as delivered.',
