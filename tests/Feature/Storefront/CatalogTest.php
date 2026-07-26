@@ -25,6 +25,21 @@ it('only shows active products', function () {
         );
 });
 
+it('exposes pagination meta used by the mobile pager', function (): void {
+    Product::factory()->count(15)->create(['is_active' => true]);
+
+    $this->get(route('storefront.catalog'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Storefront/Catalog')
+            ->has('products.data', 12)
+            ->where('products.current_page', 1)
+            ->where('products.last_page', 2)
+            ->where('products.prev_page_url', null)
+            ->where('products.next_page_url', fn (?string $url): bool => is_string($url) && str_contains($url, 'page=2'))
+        );
+});
+
 it('passes parent categories with nested children', function (): void {
     $language = Language::factory()->default()->create(['code' => 'en']);
 

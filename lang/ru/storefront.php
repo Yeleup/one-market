@@ -127,6 +127,11 @@ return [
         'empty' => 'Товары не найдены',
         'available' => 'В наличии',
         'out_of_stock' => 'Нет в наличии',
+        'pagination' => [
+            'previous' => 'Назад',
+            'next' => 'Вперёд',
+            'page_of' => 'Стр. :current из :total',
+        ],
     ],
     'checkout' => [
         'title' => 'Оформление заказа',

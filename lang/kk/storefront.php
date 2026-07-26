@@ -127,6 +127,11 @@ return [
         'empty' => 'Тауарлар табылмады',
         'available' => 'Қолда бар',
         'out_of_stock' => 'Қоймада жоқ',
+        'pagination' => [
+            'previous' => 'Артқа',
+            'next' => 'Алға',
+            'page_of' => ':current / :total бет',
+        ],
     ],
     'checkout' => [
         'title' => 'Тапсырысты рәсімдеу',

@@ -204,8 +204,43 @@
         </div>
 
         <!-- Pagination -->
-        {#if products.links?.length > 3}
-            <nav class="mt-8 flex justify-center gap-1">
+        {#if products.last_page > 1}
+            <!-- Mobile: compact prev / page / next -->
+            <nav class="mt-8 flex items-center justify-between gap-3 sm:hidden">
+                {#if products.prev_page_url}
+                    <a
+                        href={products.prev_page_url}
+                        class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-stone-700"
+                    >
+                        {t('catalog.pagination.previous', 'Назад')}
+                    </a>
+                {:else}
+                    <span class="rounded-lg bg-stone-100 px-4 py-2 text-sm font-medium text-stone-300">
+                        {t('catalog.pagination.previous', 'Назад')}
+                    </span>
+                {/if}
+                <span class="text-sm font-medium text-stone-600">
+                    {t('catalog.pagination.page_of', 'Стр. :current из :total', {
+                        current: products.current_page,
+                        total: products.last_page,
+                    })}
+                </span>
+                {#if products.next_page_url}
+                    <a
+                        href={products.next_page_url}
+                        class="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-stone-700"
+                    >
+                        {t('catalog.pagination.next', 'Вперёд')}
+                    </a>
+                {:else}
+                    <span class="rounded-lg bg-stone-100 px-4 py-2 text-sm font-medium text-stone-300">
+                        {t('catalog.pagination.next', 'Вперёд')}
+                    </span>
+                {/if}
+            </nav>
+
+            <!-- Desktop: numbered pages -->
+            <nav class="mt-8 hidden flex-wrap justify-center gap-1 sm:flex">
                 {#each products.links as link}
                     {#if link.url}
                         <a

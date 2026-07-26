@@ -127,6 +127,11 @@ return [
         'empty' => 'No products found',
         'available' => 'In stock',
         'out_of_stock' => 'Out of stock',
+        'pagination' => [
+            'previous' => 'Previous',
+            'next' => 'Next',
+            'page_of' => 'Page :current of :total',
+        ],
     ],
     'checkout' => [
         'title' => 'Checkout',
