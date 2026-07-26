@@ -119,7 +119,11 @@ class ItemsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('product_name')
             ->columns([
-                ImageColumn::make('product_image')->label(__('admin.common.fields.product_image')),
+                ImageColumn::make('product_image')
+                    ->label(__('admin.common.fields.product_image'))
+                    ->getStateUsing(fn (OrderItem $record): ?string => filled($record->product_image)
+                        ? route('image.show', ['path' => $record->product_image, 'w' => 240, 'h' => 240, 'fit' => 'crop', 'fm' => 'webp', 'q' => 80])
+                        : null),
                 TextColumn::make('product_name')->label(__('admin.common.fields.product_name'))->searchable(),
                 TextColumn::make('quantity')->label(__('admin.common.fields.quantity'))->sortable(),
                 TextColumn::make('price_bonus')->label(__('admin.common.fields.price_bonus'))->sortable(),

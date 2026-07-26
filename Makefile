@@ -136,12 +136,13 @@ import:
 
 dump-media:
 	@mkdir -p "$(dir $(storage_dump_file))"
-	$(LOAD_ENV) $(ENV_COMPOSE) exec -T app tar --exclude='storage/app/private/livewire-tmp' -cf - -C /var/www/html "$(storage_dir)" | gzip > "$(storage_dump_file)"
+	@set -o pipefail; $(LOAD_ENV) $(ENV_COMPOSE) exec -T app tar -cf - -C /var/www/html --exclude='storage/app/private/livewire-tmp' "$(storage_dir)" | gzip > "$(storage_dump_file)" || { rm -f "$(storage_dump_file)"; echo 'dump-media failed (is the app container running?).' >&2; exit 1; }
+	@gzip -t "$(storage_dump_file)" || { rm -f "$(storage_dump_file)"; echo 'Produced archive is not a valid gzip; removed it.' >&2; exit 1; }
 
 import-media:
 	@test -f "$(storage_dump_file)" || (echo 'Storage archive not found: $(storage_dump_file)' >&2; exit 1)
 	@gzip -t "$(storage_dump_file)" || (echo 'Invalid gzip archive: $(storage_dump_file)' >&2; exit 1)
-	$(LOAD_ENV) gunzip -c "$(storage_dump_file)" | $(ENV_COMPOSE) exec -T app tar -xf - -C /var/www/html
+	@set -o pipefail; $(LOAD_ENV) gunzip -c "$(storage_dump_file)" | $(ENV_COMPOSE) exec -T app tar -xf - -C /var/www/html
 
 test:
 	@test "$(APP_ENV)" != "production" || (echo 'Refusing to run tests in production.' >&2; exit 1)

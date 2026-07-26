@@ -169,7 +169,11 @@ class ProductResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id')->label(__('admin.common.fields.id'))->sortable(),
-                ImageColumn::make('image')->label(__('admin.common.fields.image'))->disk('public'),
+                ImageColumn::make('image')
+                    ->label(__('admin.common.fields.image'))
+                    ->getStateUsing(fn (Product $record): ?string => filled($record->image)
+                        ? route('image.show', ['path' => $record->image, 'w' => 240, 'h' => 240, 'fit' => 'crop', 'fm' => 'webp', 'q' => 80])
+                        : null),
                 TextColumn::make('localized_name')
                     ->label(__('admin.common.fields.name'))
                     ->searchable(
