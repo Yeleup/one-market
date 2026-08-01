@@ -15,6 +15,7 @@ use App\Filament\Resources\OrderResource\RelationManagers\StatusHistoriesRelatio
 use App\Models\Client;
 use App\Models\Institution;
 use App\Models\Order;
+use App\Support\Dates\DisplayDate;
 use BackedEnum;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\BulkAction;
@@ -318,13 +319,7 @@ class OrderResource extends Resource
 
     private static function formatDateTimePreview(?Order $record, string $attribute, string $fallback): string
     {
-        $dateTime = $record?->{$attribute};
-
-        if ($dateTime === null) {
-            return $fallback;
-        }
-
-        return $dateTime->toDateTimeString();
+        return DisplayDate::format($record?->{$attribute}, 'Y-m-d H:i:s') ?? $fallback;
     }
 
     public static function table(Table $table): Table
@@ -413,7 +408,7 @@ class OrderResource extends Resource
                     'generatedAt' => now(),
                 ]);
 
-                $filename = 'purchase-report-'.now()->format('Y-m-d').'.pdf';
+                $filename = 'purchase-report-'.DisplayDate::now()->format('Y-m-d').'.pdf';
 
                 return response()->streamDownload(
                     fn () => print ($pdf->output()),

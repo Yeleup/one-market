@@ -120,7 +120,7 @@
             </td>
             <td class="date">
                 {{ __('admin.common.fields.created_at') }}:
-                {{ $order->created_at?->format('Y-m-d H:i') ?? '—' }}
+                {{ \App\Support\Dates\DisplayDate::format($order->created_at, 'Y-m-d H:i') ?? '—' }}
             </td>
         </tr>
     </table>

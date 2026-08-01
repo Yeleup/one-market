@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Institution;
 use App\Models\Order;
 use App\Models\Product;
+use App\Support\Dates\DisplayDate;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Number;
@@ -26,8 +27,11 @@ class DashboardOverviewWidget extends StatsOverviewWidget
      */
     protected function getStats(): array
     {
+        $startOfToday = DisplayDate::startOfToday();
+
         $todayOrdersCount = Order::query()
-            ->whereDate('created_at', today())
+            ->where('created_at', '>=', $startOfToday)
+            ->where('created_at', '<', $startOfToday->copy()->addDay())
             ->count();
 
         $activeClientsCount = Client::query()

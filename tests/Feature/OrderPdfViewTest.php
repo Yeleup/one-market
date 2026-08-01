@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 
 uses(RefreshDatabase::class);
 
@@ -39,6 +40,20 @@ it('omits the source, created by and placed at rows', function (): void {
         ->not->toContain(__('admin.common.fields.source'))
         ->not->toContain(__('admin.common.fields.created_by'))
         ->not->toContain(__('admin.common.fields.placed_at'));
+});
+
+it('prints the created at timestamp in the display timezone, not utc', function (): void {
+    config(['app.display_timezone' => 'Asia/Almaty']);
+
+    $order = Order::factory()
+        ->for(Client::factory())
+        ->for(Institution::factory())
+        ->create(['created_at' => Carbon::parse('2026-06-29 06:44:54', 'UTC')]);
+
+    $html = renderOrderPdfView($order);
+
+    expect($html)->toContain('2026-06-29 11:44')
+        ->and($html)->not->toContain('2026-06-29 06:44');
 });
 
 it('renders the configured supplier name and bin', function (): void {

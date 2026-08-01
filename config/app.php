@@ -69,6 +69,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Display Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Timestamps are always stored in UTC. This is the timezone they are
+    | converted to whenever they are shown to a human: the admin panel,
+    | the storefront and the generated PDF documents. Never point the
+    | "timezone" option above at it, or stored data would shift.
+    |
+    */
+
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Almaty'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

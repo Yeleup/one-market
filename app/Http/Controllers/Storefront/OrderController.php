@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Order;
+use App\Support\Dates\DisplayDate;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -28,7 +29,7 @@ class OrderController extends Controller
                 'status' => $order->status->value,
                 'total_bonus' => $order->total_bonus,
                 'total_weight_grams' => $order->total_weight_grams,
-                'placed_at' => $order->placed_at?->format('d.m.Y H:i'),
+                'placed_at' => DisplayDate::format($order->placed_at, 'd.m.Y H:i'),
             ]),
         ]);
     }
@@ -54,9 +55,9 @@ class OrderController extends Controller
                 'status' => $order->status->value,
                 'total_bonus' => $order->total_bonus,
                 'total_weight_grams' => $order->total_weight_grams,
-                'placed_at' => $order->placed_at?->format('d.m.Y H:i'),
-                'delivered_at' => $order->delivered_at?->format('d.m.Y H:i'),
-                'cancelled_at' => $order->cancelled_at?->format('d.m.Y H:i'),
+                'placed_at' => DisplayDate::format($order->placed_at, 'd.m.Y H:i'),
+                'delivered_at' => DisplayDate::format($order->delivered_at, 'd.m.Y H:i'),
+                'cancelled_at' => DisplayDate::format($order->cancelled_at, 'd.m.Y H:i'),
                 'institution' => $order->institution ? [
                     'id' => $order->institution->id,
                     'name' => $order->institution->localized_name,
@@ -76,7 +77,7 @@ class OrderController extends Controller
                     'from_status' => $h->from_status?->value,
                     'to_status' => $h->to_status->value,
                     'comment' => $h->comment,
-                    'created_at' => $h->created_at?->format('d.m.Y H:i'),
+                    'created_at' => DisplayDate::format($h->created_at, 'd.m.Y H:i'),
                 ]),
             ],
         ]);

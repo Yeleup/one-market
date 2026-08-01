@@ -91,7 +91,7 @@
 
     <p class="summary">
         {{ __('admin.resources.order.purchase_report.generated_at') }}:
-        {{ $generatedAt->format('Y-m-d H:i') }}
+        {{ \App\Support\Dates\DisplayDate::format($generatedAt, 'Y-m-d H:i') }}
     </p>
     <p class="summary">
         {{ __('admin.resources.order.purchase_report.orders_included') }}

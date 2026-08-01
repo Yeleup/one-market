@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
 use App\Models\Client;
+use App\Support\Dates\DisplayDate;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -33,7 +34,7 @@ class DashboardController extends Controller
                     'url' => route('storefront.orders.show', $order, false),
                     'status' => $order->status->value,
                     'total_bonus' => $order->total_bonus,
-                    'placed_at' => $order->placed_at?->format('d.m.Y H:i'),
+                    'placed_at' => DisplayDate::format($order->placed_at, 'd.m.Y H:i'),
                 ]),
             'recentTransactions' => $client->bonusTransactions()
                 ->latest()
@@ -46,7 +47,7 @@ class DashboardController extends Controller
                     'balance_delta' => $tx->balance_delta,
                     'reserved_delta' => $tx->reserved_delta,
                     'comment' => $tx->comment,
-                    'created_at' => $tx->created_at?->format('d.m.Y H:i'),
+                    'created_at' => DisplayDate::format($tx->created_at, 'd.m.Y H:i'),
                 ]),
         ]);
     }

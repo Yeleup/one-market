@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Http\Middleware\SetAdminLocaleFromDefaultLanguage;
+use App\Support\Dates\DisplayDate;
+use Filament\Support\Facades\FilamentTimezone;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -24,5 +26,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::addPersistentMiddleware([
             SetAdminLocaleFromDefaultLanguage::class,
         ]);
+
+        FilamentTimezone::set(DisplayDate::timezone());
     }
 }
