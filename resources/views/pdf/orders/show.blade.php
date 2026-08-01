@@ -2,26 +2,28 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <title>{{ __('admin.resources.order.model_label') }} #{{ $order->getKey() }}</title>
+    <title>{{ Str::ucfirst(__('admin.resources.order.model_label')) }} #{{ $order->getKey() }}</title>
     <style>
-        body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 12px;
-            color: #111827;
-            line-height: 1.5;
+        @page {
+            margin: 10mm 10mm 12mm;
         }
 
-        h1, h2 {
-            margin: 0 0 12px;
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 9px;
+            color: #111827;
+            line-height: 1.25;
+            margin: 0;
         }
 
         h1 {
-            font-size: 24px;
+            font-size: 13px;
+            margin: 0;
         }
 
         h2 {
-            font-size: 16px;
-            margin-top: 24px;
+            font-size: 10px;
+            margin: 10px 0 3px;
         }
 
         table {
@@ -31,75 +33,123 @@
 
         th, td {
             border: 1px solid #d1d5db;
-            padding: 8px 10px;
+            padding: 2px 4px;
             vertical-align: top;
         }
 
         th {
             background: #f3f4f6;
             text-align: left;
+            font-weight: 700;
         }
 
-        .meta-table td:first-child {
-            width: 32%;
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        .header {
+            border: 0;
+            margin-bottom: 6px;
+        }
+
+        .header td {
+            border: 0;
+            padding: 0;
+        }
+
+        .header .date {
+            text-align: right;
+            vertical-align: bottom;
+        }
+
+        .meta-table th {
+            width: 15%;
+            white-space: nowrap;
+        }
+
+        .meta-table td {
+            width: 35%;
+        }
+
+        .num {
+            text-align: right;
+            white-space: nowrap;
+            width: 10%;
+        }
+
+        tfoot td {
             font-weight: 700;
             background: #f9fafb;
         }
 
-        .totals {
-            margin-top: 16px;
+        .signatures {
+            margin-top: 22px;
+            page-break-inside: avoid;
         }
 
-        .totals td:first-child {
-            font-weight: 700;
-            width: 60%;
+        .signatures td {
+            border: 0;
+            padding: 0;
+            white-space: nowrap;
+        }
+
+        .signatures .sig-label {
+            width: 1%;
+            padding-right: 4px;
+        }
+
+        .signatures .sig-line {
+            border-bottom: 1px solid #111827;
+            width: 32%;
+        }
+
+        .signatures .sig-gap {
+            width: 6%;
         }
     </style>
 </head>
 <body>
-    <h1>{{ __('admin.resources.order.model_label') }} #{{ $order->getKey() }}</h1>
+    <table class="header">
+        <tr>
+            <td>
+                <h1>{{ Str::ucfirst(__('admin.resources.order.model_label')) }} #{{ $order->getKey() }}</h1>
+            </td>
+            <td class="date">
+                {{ __('admin.common.fields.created_at') }}:
+                {{ $order->created_at?->format('Y-m-d H:i') ?? '—' }}
+            </td>
+        </tr>
+    </table>
 
     <table class="meta-table">
         <tbody>
             <tr>
-                <td>{{ __('admin.common.fields.status') }}</td>
+                <th>{{ __('admin.common.fields.supplier') }}</th>
+                <td>{{ config('company.supplier.name') }}</td>
+                <th>{{ __('admin.common.fields.bin') }}</th>
+                <td>{{ config('company.supplier.bin') }}</td>
+            </tr>
+            <tr>
+                <th>{{ __('admin.common.fields.status') }}</th>
                 <td>{{ $order->status?->getLabel() ?? $order->status?->value }}</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.source') }}</td>
-                <td>{{ $order->source?->getLabel() ?? $order->source?->value }}</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.client') }}</td>
-                <td>{{ $order->client?->full_name ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.bin') }}</td>
-                <td>{{ $order->client?->bin ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.institution') }}</td>
+                <th>{{ __('admin.common.fields.institution') }}</th>
                 <td>{{ $order->institution?->localized_name ?? '—' }}</td>
             </tr>
             <tr>
-                <td>{{ __('admin.common.fields.recipient') }}</td>
+                <th>{{ __('admin.common.fields.client') }}</th>
+                <td>{{ $order->client?->full_name ?? '—' }}</td>
+                <th>{{ __('admin.common.fields.bin') }}</th>
+                <td>{{ $order->client?->bin ?? '—' }}</td>
+            </tr>
+            <tr>
+                <th>{{ __('admin.common.fields.recipient') }}</th>
                 <td>{{ $order->recipient_full_name ?: '—' }}</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.bin') }}</td>
+                <th>{{ __('admin.common.fields.recipient_bin') }}</th>
                 <td>{{ $order->recipient_bin_value ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.created_by') }}</td>
-                <td>{{ $order->createdByUser?->name ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.created_at') }}</td>
-                <td>{{ $order->created_at?->format('Y-m-d H:i') ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.placed_at') }}</td>
-                <td>{{ $order->placed_at?->format('Y-m-d H:i') ?? '—' }}</td>
             </tr>
         </tbody>
     </table>
@@ -110,22 +160,22 @@
         <thead>
             <tr>
                 <th>{{ __('admin.common.fields.product_name') }}</th>
-                <th>{{ __('admin.common.fields.quantity') }}</th>
-                <th>{{ __('admin.common.fields.price_bonus') }}</th>
-                <th>{{ __('admin.common.fields.weight') }}</th>
-                <th>{{ __('admin.common.fields.line_total_bonus') }}</th>
-                <th>{{ __('admin.common.fields.line_total_weight') }}</th>
+                <th class="num">{{ __('admin.common.fields.quantity') }}</th>
+                <th class="num">{{ __('admin.common.fields.price_bonus') }}</th>
+                <th class="num">{{ __('admin.common.fields.weight') }}</th>
+                <th class="num">{{ __('admin.common.fields.line_total_bonus') }}</th>
+                <th class="num">{{ __('admin.common.fields.line_total_weight') }}</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($order->items as $item)
                 <tr>
                     <td>{{ $item->product_name }}</td>
-                    <td>{{ $item->quantity }}</td>
-                    <td>{{ $item->price_bonus }}</td>
-                    <td>{{ $item->weight_grams }} g</td>
-                    <td>{{ $item->line_total_bonus }}</td>
-                    <td>{{ $item->line_total_weight_grams }} g</td>
+                    <td class="num">{{ $item->quantity }}</td>
+                    <td class="num">{{ $item->price_bonus }}</td>
+                    <td class="num">{{ $item->weight_grams }} g</td>
+                    <td class="num">{{ $item->line_total_bonus }}</td>
+                    <td class="num">{{ $item->line_total_weight_grams }} g</td>
                 </tr>
             @empty
                 <tr>
@@ -133,21 +183,27 @@
                 </tr>
             @endforelse
         </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4">{{ __('admin.common.fields.total_bonus') }} / {{ __('admin.common.fields.total_weight') }}</td>
+                <td class="num">{{ $order->total_bonus }}</td>
+                <td class="num">{{ $order->total_weight_grams }} g</td>
+            </tr>
+            <tr>
+                <td colspan="4">{{ __('admin.common.fields.bonus_reserved') }}</td>
+                <td class="num" colspan="2">{{ $order->reserved_bonus_amount }}</td>
+            </tr>
+        </tfoot>
     </table>
 
-    <table class="totals">
+    <table class="signatures">
         <tbody>
             <tr>
-                <td>{{ __('admin.common.fields.total_bonus') }}</td>
-                <td>{{ $order->total_bonus }}</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.total_weight') }}</td>
-                <td>{{ $order->total_weight_grams }} g</td>
-            </tr>
-            <tr>
-                <td>{{ __('admin.common.fields.bonus_reserved') }}</td>
-                <td>{{ $order->reserved_bonus_amount }}</td>
+                <td class="sig-label">{{ __('admin.resources.order.pdf.released_by') }}</td>
+                <td class="sig-line">&nbsp;</td>
+                <td class="sig-gap">&nbsp;</td>
+                <td class="sig-label">{{ __('admin.resources.order.pdf.received_by') }}</td>
+                <td class="sig-line">&nbsp;</td>
             </tr>
         </tbody>
     </table>

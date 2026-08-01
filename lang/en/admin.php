@@ -76,6 +76,7 @@ return [
             'status' => 'Status',
             'status_changed_at' => 'Status changed at',
             'stock_quantity' => 'Stock quantity',
+            'supplier' => 'Supplier',
             'total_bonus' => 'Total bonus',
             'total_weight' => 'Total weight',
             'to_status' => 'To status',
@@ -155,6 +156,10 @@ return [
                 'recipient_empty' => 'Recipient data is empty.',
                 'recipient_from_client' => 'Select a client, and the recipient data will be filled from the client profile.',
                 'status_not_changed' => 'Has not changed yet.',
+            ],
+            'pdf' => [
+                'released_by' => 'Released by',
+                'received_by' => 'Received by',
             ],
             'purchase_report' => [
                 'title' => 'Purchase report',

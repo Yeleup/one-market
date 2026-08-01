@@ -76,6 +76,7 @@ return [
             'status' => 'Статус',
             'status_changed_at' => 'Статус изменён',
             'stock_quantity' => 'Остаток на складе',
+            'supplier' => 'Поставщик',
             'total_bonus' => 'Всего бонусов',
             'total_weight' => 'Общий вес',
             'to_status' => 'В статус',
@@ -155,6 +156,10 @@ return [
                 'recipient_empty' => 'Данные получателя не заполнены.',
                 'recipient_from_client' => 'Выберите клиента, и данные получателя заполнятся из его карточки.',
                 'status_not_changed' => 'Ещё не менялся.',
+            ],
+            'pdf' => [
+                'released_by' => 'Отпустил',
+                'received_by' => 'Получил',
             ],
             'purchase_report' => [
                 'title' => 'Отчёт для закупки товаров',

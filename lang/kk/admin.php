@@ -76,6 +76,7 @@ return [
             'status' => 'Күйі',
             'status_changed_at' => 'Күйі өзгерген уақыты',
             'stock_quantity' => 'Қоймадағы қалдық',
+            'supplier' => 'Жеткізуші',
             'total_bonus' => 'Жалпы бонус',
             'total_weight' => 'Жалпы салмақ',
             'to_status' => 'Жаңа күйі',
@@ -155,6 +156,10 @@ return [
                 'recipient_empty' => 'Алушы деректері толтырылмаған.',
                 'recipient_from_client' => 'Клиентті таңдаңыз, сонда алушы деректері оның картасынан толтырылады.',
                 'status_not_changed' => 'Әлі өзгертілмеген.',
+            ],
+            'pdf' => [
+                'released_by' => 'Босатты',
+                'received_by' => 'Қабылдады',
             ],
             'purchase_report' => [
                 'title' => 'Тауар сатып алуға арналған есеп',
