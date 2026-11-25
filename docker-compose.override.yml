@@ -44,7 +44,14 @@ services:
     command:
       - sh
       - -lc
-      - npm run dev -- --host 0.0.0.0 --port ${VITE_PORT:-5173}
+      - |
+        if [ -f package-lock.json ]; then
+          npm ci --no-fund --no-audit
+        elif [ -f package.json ] && [ ! -d node_modules ]; then
+          npm install --no-fund --no-audit
+        fi
+
+        npm run dev -- --host 0.0.0.0 --port ${VITE_PORT:-5173}
     environment:
       APP_URL: ${APP_URL:-http://localhost:8000}
       VITE_PORT: ${VITE_PORT:-5173}

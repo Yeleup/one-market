@@ -6,6 +6,7 @@
 .phpactor.json
 .phpunit.result.cache
 /.fleet
+/.deploy/
 /.idea
 /.nova
 /.phpunit.cache
@@ -19,6 +20,7 @@
 /storage/*.key
 /storage/pail
 /vendor
+/vendor.tmp.*
 _ide_helper.php
 Homestead.json
 Homestead.yaml
@@ -27,3 +29,5 @@ Thumbs.db
 **/caddy
 frankenphp
 frankenphp-worker.php
+/docker/db/dump.sql.gz
+/docker/db/storage.tar.gz

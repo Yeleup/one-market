@@ -1,7 +1,12 @@
+# syntax=docker/dockerfile:1.7
+
 FROM dunglas/frankenphp:1-php8.4-alpine AS php-base
 
-RUN install-php-extensions \
+RUN apk add --no-cache \
+        font-dejavu \
+    && install-php-extensions \
         bcmath \
+        exif \
         gd \
         intl \
         mbstring \
@@ -40,15 +45,19 @@ FROM node:22-alpine AS frontend
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY . .
+COPY --from=vendor-prod /var/www/html/vendor ./vendor
 
-RUN npm ci
-
-COPY resources ./resources
-COPY public ./public
-COPY vite.config.js ./
-
-RUN npm run build
+RUN if [ -f package-lock.json ]; then \
+        npm ci; \
+    elif [ -f package.json ]; then \
+        npm install; \
+    fi \
+    && if [ -f package.json ]; then \
+        npm run build; \
+    else \
+        mkdir -p public/build; \
+    fi
 
 FROM php-base AS app
 

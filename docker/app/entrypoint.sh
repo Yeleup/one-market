@@ -14,7 +14,7 @@ ensure_application_key() {
         return
     fi
 
-    echo "APP_KEY is not set." >&2
+    echo "APP_KEY is not set. Run 'make key-generate' or set APP_KEY in .env." >&2
     exit 1
 }
 

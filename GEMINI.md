@@ -1,4 +1,78 @@
 <laravel-boost-guidelines>
+=== .ai/laravel-docker-template rules ===
+
+# Laravel Docker Template
+
+The `laravel-docker-template` directory is the reusable source template for this project's Docker setup.
+
+When changing Docker, runtime, or local development configuration in the project root, make the equivalent generic change in `laravel-docker-template` during the same task.
+
+This applies to:
+
+- `.dockerignore`
+- `.env.docker.example`
+- `Dockerfile`
+- `Makefile`
+- `docker-compose.yml`
+- `docker-compose.override.yml`
+- `docker/app/*`
+- `docker/worktree/*`
+- `orca.yaml`
+- Docker-related README instructions
+
+Keep the template reusable. Do not copy project-specific secrets, local machine paths, app names, generated files, or one-off values into `laravel-docker-template` unless the change is intentionally part of the reusable template.
+
+=== .ai/prod-server rules ===
+
+# Боевой сервер
+
+- one-market работает на сервере `esepteu` (общем с esepteu): алиас `esepteu-prod`, пользователь `developer`, проект в `~/one-market`.
+- Деплой: `server-kit job esepteu one-market-deploy -- 'cd ~/one-market && make deploy'`, затем `server-kit job-wait esepteu <задание>`. Если на сервере `make deploy-status` отвечает «No rule to make target», там ещё Makefile без блокировки: первый деплой — только по просьбе владельца и после его проверки `.env` сервера, командой `'cd ~/one-market && git pull && make deploy'`, когда другая команда стека не идёт (`docs/deployment.md`, «Первый деплой с блокировкой»). Отката нет: команды отката не существует. Состояние (только чтение): `ssh esepteu-prod 'cd ~/one-market && make deploy-status'`.
+- Нагрузка: `server-status esepteu` (раздел `[one-market]`). `server-kit logs esepteu` читает лог esepteu, а не one-market: лога one-market через server-kit пока нет (`docs/deployment.md`, «Доступ к серверу»).
+- Стек — Docker Compose проект `one-market` из `docker-compose.yml` (Octane на FrankenPHP, очередь, планировщик, MariaDB, Redis), приложение на порту 8600; MariaDB наружу не публикуется. `make deploy` пересобирает и пересоздаёт стек на месте, приложение при этом коротко недоступно. Команды, которые меняют стек, идут по одной: если занято, команда сразу отказывает и называет, что уже идёт, — не повторять её в цикле и не останавливать ту команду без просьбы владельца (`docs/deployment.md`, «Одна команда за раз»). `make import` в production отказывает; `make import-media` заменяет боевые файлы — только по просьбе владельца.
+- Сервер общий: рядом работает esepteu (compose-проект `eseply`), там же лежат остановленные копии sala и satu-plus — команды one-market их не трогают, а перезапуск Docker и перезагрузка сервера задевают и esepteu.
+- Переезд: `docs/deployment.md`, раздел «Перенос на другой сервер».
+- Доступ — по общему правилу «Боевые серверы» и инструкции server-kit (`server-kit help`).
+
+=== .ai/project-testing rules ===
+
+# Project Testing
+
+This project uses Makefile commands for all test execution.
+
+## Required test command
+
+Always run tests using:
+
+```bash
+make test
+```
+
+Filter or pass other arguments with `test_args`:
+
+```bash
+make test test_args="--compact --filter=SomeTest"
+```
+
+`make test` runs the tests of the current checkout (main checkout or git worktree) in a one-off container against its own MariaDB test database. It overrides generic `php artisan test` / `composer test` instructions: host PHP has no access to the database.
+
+=== .ai/worktrees rules ===
+
+# Git Worktrees (Orca, Claude Code, Codex)
+
+Parallel agents work in git worktrees: Orca creates them in `~/orca/workspaces/<repo>/<name>`, Claude Code in `.claude/worktrees/<name>`. You are in a worktree when `git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`.
+
+- The main checkout's running stack (its `APP_URL`, Vite port, containers and Boost MCP there) serves the MAIN checkout's code. Never use it to verify worktree changes.
+- A worktree gets its own `.env` from `make worktree-setup` (Orca runs it through `orca.yaml` before the agent starts): `WORKTREE_MANAGED=1`, its own `DOCKER_PROJECT_NAME`, ports, databases and database user. Never copy or symlink the main `.env`, never run `make init` in a worktree, never point `DOCKER_PROJECT_NAME` or `docker compose -p` at the main project.
+- If `.env` or `vendor/` is missing, or make says the `.env` "was not generated for this git worktree", run `make worktree-setup` and nothing else.
+- `make test`, `make artisan`, `make composer` and `make shell` run in one-off containers that mount the current checkout, so they test and change THIS worktree. Host `php artisan` / `php artisan test` do not work.
+- `make test` uses the worktree's own test database, so parallel agents do not collide. "No running database": ask the user to start the main stack, or run `make db-up` (only this worktree's db and redis).
+- After adding migrations: `make artisan artisan_args="migrate"` (the worktree's own database). Boost MCP answers for this worktree's code and database.
+- Pint: `vendor/bin/pint --dirty --format agent` on the host (the worktree has its own `vendor/`).
+- UI checks: `make up` starts an isolated stack at `APP_URL` from the worktree's `.env` with an empty database (`make artisan artisan_args="db:seed"` to fill it); `make down` when finished.
+- After changing `Dockerfile` or `docker/app/*`: `make build` in the worktree (one-off containers otherwise use the main checkout's image).
+- After a branch is merged, migrations do not run by themselves in the main checkout: `make artisan artisan_args="migrate"` there.
+
 === foundation rules ===
 
 # Laravel Boost Guidelines

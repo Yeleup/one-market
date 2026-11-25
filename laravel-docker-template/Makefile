@@ -1,0 +1,336 @@
+SHELL := /bin/bash
+
+ENV_FILE ?= .env
+# $(call env_value,KEY): KEY from $(ENV_FILE) without surrounding quotes.
+env_value = $(strip $(shell sed -n 's/^$(1)=//p' $(ENV_FILE) 2>/dev/null | head -n 1 | sed -E "s/^([\"'])(.*)\1$$/\2/"))
+# $(call running_db,PROJECT): id of the running db container of a compose project (empty if none).
+running_db = $(if $(1),$(shell docker ps -q --filter 'label=com.docker.compose.project=$(1)' --filter 'label=com.docker.compose.service=db' --filter 'label=com.docker.compose.oneoff=False' --filter status=running 2>/dev/null | head -n 1))
+
+# Non-empty in a linked git worktree (Orca, Claude Code, `git worktree add`), empty in the main checkout.
+IS_WORKTREE := $(shell [ "$$(git rev-parse --path-format=absolute --git-dir 2>/dev/null)" != "$$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" ] && echo 1)
+
+ifneq ($(origin DOCKER_PROJECT_NAME),command line)
+DOCKER_PROJECT_NAME := $(call env_value,DOCKER_PROJECT_NAME)
+endif
+ifneq ($(origin APP_ENV),command line)
+APP_ENV := $(call env_value,APP_ENV)
+endif
+DOCKER_INFRA_PROJECT := $(if $(IS_WORKTREE),$(call env_value,DOCKER_INFRA_PROJECT))
+
+# Compose project whose network one-off containers join: this checkout's own, unless this is a git
+# worktree whose own database is not running while the main checkout's is. The worktree then uses its
+# own databases and database user on the main checkout's MariaDB.
+RUN_PROJECT := $(DOCKER_PROJECT_NAME)
+ifneq ($(DOCKER_INFRA_PROJECT),)
+ifeq ($(call running_db,$(DOCKER_PROJECT_NAME)),)
+ifneq ($(call running_db,$(DOCKER_INFRA_PROJECT)),)
+RUN_PROJECT := $(DOCKER_INFRA_PROJECT)
+endif
+endif
+endif
+
+COMPOSE_ENV_FILE := $(if $(wildcard $(ENV_FILE)),--env-file $(ENV_FILE),)
+LOAD_ENV := set -a; if [ -f "$(ENV_FILE)" ]; then source "$(ENV_FILE)"; fi; set +a; export DOCKER_PROJECT_NAME='$(DOCKER_PROJECT_NAME)';
+COMPOSE_BASE := docker compose -p $(DOCKER_PROJECT_NAME) $(COMPOSE_ENV_FILE)
+LOCAL_COMPOSE := $(COMPOSE_BASE) -f docker-compose.yml -f docker-compose.override.yml
+PROD_COMPOSE := $(COMPOSE_BASE) -f docker-compose.yml
+IS_PRODUCTION := $(filter production,$(APP_ENV))
+ENV_COMPOSE := $(if $(IS_PRODUCTION),$(PROD_COMPOSE),$(LOCAL_COMPOSE))
+ENV_ENSURE_VENDOR := $(if $(IS_PRODUCTION),,ensure-vendor)
+ENV_ENSURE_NODE_MODULES := $(if $(IS_PRODUCTION),,ensure-node-modules)
+# One-off containers always bind-mount THIS checkout. RUN_PROJECT may be the main checkout's project:
+# use it only with `run --rm --no-deps`, never with up/down/exec. On the main checkout's network a
+# worktree keeps cache, queue and sessions away from the shared Redis and queue worker.
+RUN_ISOLATION := $(if $(filter-out $(DOCKER_PROJECT_NAME),$(RUN_PROJECT)),-e CACHE_STORE=file -e QUEUE_CONNECTION=sync -e SESSION_DRIVER=file,)
+RUN_APP_COMPOSE := docker compose -p $(RUN_PROJECT) $(COMPOSE_ENV_FILE) -f docker-compose.yml -f docker-compose.override.yml run --rm --no-deps
+RUN_APP_BASE := $(LOAD_ENV) $(RUN_APP_COMPOSE)
+RUN_APP := $(RUN_APP_BASE) $(RUN_ISOLATION)
+NO_DB_HINT := $(if $(DOCKER_INFRA_PROJECT),start the main checkout stack (make up there) or this worktree's own database (make db-up),start it with make up or make db-up)
+WORKTREE_SH := bash docker/worktree/worktree.sh
+# Production targets that change the stack run one at a time: docker/deploy/deploy.sh takes one lock
+# for them and refuses the others at once (docs/deployment.md). Locally they run without it.
+DEPLOY_SH := sh docker/deploy/deploy.sh
+PROD_LOCK = $(if $(IS_PRODUCTION),DEPLOY_COMMAND='make $@' $(DEPLOY_SH) lock --)
+# Compose project name that older versions of this setup used when DOCKER_PROJECT_NAME was empty.
+LEGACY_PROJECT_NAME := laravel-app
+STRIP_DEFINER := sed -E 's/DEFINER=`[^`]*`@`[^`]*`//g'
+
+test_args ?= --compact
+test_database ?=
+artisan_args ?= list
+composer_args ?= --version
+npm_args ?= --version
+dump_file ?= docker/db/dump.sql.gz
+storage_dump_file ?= docker/db/storage.tar.gz
+storage_dir ?= storage/app
+
+.PHONY: help init require-env require-not-production guard-owner require-db ensure-db ensure-vendor ensure-node-modules build up db-up down down-volumes restart logs ps shell artisan composer npm key-show key-generate dump import dump-media import-media test boost-mcp worktree-setup worktree-archive worktree-prune deploy deploy-steps deploy-status
+
+help:
+	@printf '%s\n' \
+		'make init                # main checkout: create .env, add missing Docker vars, and generate APP_KEY' \
+		'make worktree-setup      # git worktree: own .env (project, ports, databases), vendor, migrations' \
+		'make build               # build and start this checkout'"'"'s stack using APP_ENV from .env' \
+		'make up                  # start this checkout'"'"'s stack without rebuilding' \
+		'make db-up               # start only this checkout'"'"'s db and redis (enough for make test)' \
+		'make down                # stop the stack' \
+		'make down-volumes        # stop the stack and delete named volumes' \
+		'make restart             # restart the stack' \
+		'make logs                # follow logs' \
+		'make ps                  # show container status' \
+		'make shell               # shell in a one-off app container that mounts this checkout' \
+		'make artisan artisan_args="route:list" # artisan in a one-off app container' \
+		'make composer composer_args="install"  # composer in a one-off app container' \
+		'make npm npm_args="run build"          # npm in the vite container' \
+		'make key-show            # print a generated APP_KEY' \
+		'make key-generate        # write APP_KEY into .env' \
+		'make dump                # export database to docker/db/dump.sql.gz' \
+		'make import              # recreate database and import docker/db/dump.sql.gz' \
+		'make dump-media          # export storage/app to docker/db/storage.tar.gz' \
+		'make import-media        # replace storage/app from docker/db/storage.tar.gz' \
+		'make test                # run this checkout'"'"'s tests in a one-off container (test_args=, test_database=)' \
+		'make worktree-archive    # git worktree: remove its containers, volumes, databases and database user' \
+		'make worktree-prune      # list leftovers of deleted git worktrees (CONFIRM=yes removes them)' \
+		'make deploy              # production: pull, build, migrate, and restart queue workers, one command at a time' \
+		'make deploy-status       # read only: commit, how far behind upstream, the deploy lock, containers'
+
+require-env:
+	@if [ -z "$(DOCKER_PROJECT_NAME)" ]; then \
+		echo 'DOCKER_PROJECT_NAME is not set in $(ENV_FILE). Main checkout: make init. Git worktree: make worktree-setup.' >&2; \
+		if [ -n "$$(docker ps -aq --filter 'label=com.docker.compose.project=$(LEGACY_PROJECT_NAME)' --filter 'label=com.docker.compose.project.working_dir=$(CURDIR)' 2>/dev/null)" ]; then \
+			echo 'This checkout already runs containers under the old default project name: add DOCKER_PROJECT_NAME=$(LEGACY_PROJECT_NAME) to $(ENV_FILE) to keep them and their volumes.' >&2; \
+		fi; \
+		exit 1; \
+	fi
+	@if [ -n "$(IS_WORKTREE)" ] || [ "$(call env_value,WORKTREE_MANAGED)" = 1 ]; then \
+		ENV_FILE='$(ENV_FILE)' $(WORKTREE_SH) check-env; \
+	fi
+
+require-not-production:
+	@test -z "$(IS_PRODUCTION)" || (echo 'Refusing to run this target with APP_ENV=production.' >&2; exit 1)
+
+# Refuse to change a compose project whose containers were created from another directory.
+guard-owner: require-env
+	@docker ps -a --filter 'label=com.docker.compose.project=$(DOCKER_PROJECT_NAME)' --filter 'label=com.docker.compose.oneoff=False' \
+		--format '{{.Label "com.docker.compose.project.working_dir"}}' | sort -u | while IFS= read -r dir; do \
+		if [ -n "$$dir" ] && [ "$$(realpath -m "$$dir")" != "$$(realpath -m "$(CURDIR)")" ]; then \
+			echo "Refusing: compose project '$(DOCKER_PROJECT_NAME)' belongs to $$dir, not $(CURDIR)." >&2; \
+			echo 'Every checkout needs its own DOCKER_PROJECT_NAME (git worktrees: make worktree-setup).' >&2; \
+			exit 1; \
+		fi; \
+	done
+
+require-db: require-env
+	@if [ -z "$(call running_db,$(RUN_PROJECT))" ]; then \
+		echo "No running database for compose project '$(RUN_PROJECT)': $(NO_DB_HINT)." >&2; \
+		exit 1; \
+	fi
+
+ensure-db: require-db
+ifneq ($(DOCKER_INFRA_PROJECT),)
+	@RUN_PROJECT='$(RUN_PROJECT)' ENV_FILE='$(ENV_FILE)' $(WORKTREE_SH) ensure-db $(test_database)
+endif
+
+init:
+	@if [ -n "$(IS_WORKTREE)" ]; then \
+		echo 'This is a git worktree: run make worktree-setup (make init would reuse the main checkout'"'"'s project name, ports and databases).' >&2; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(ENV_FILE)" ]; then \
+		test -f .env.example || (echo '.env.example not found.' >&2; exit 1); \
+		cp .env.example "$(ENV_FILE)"; \
+	fi
+	@if ! grep -Eq '^DOCKER_PROJECT_NAME=.+' "$(ENV_FILE)" \
+		&& [ -n "$$(docker ps -aq --filter 'label=com.docker.compose.project=$(LEGACY_PROJECT_NAME)' --filter 'label=com.docker.compose.project.working_dir=$(CURDIR)' 2>/dev/null)" ]; then \
+		sed -i '/^DOCKER_PROJECT_NAME=/d' "$(ENV_FILE)"; \
+		printf '\nDOCKER_PROJECT_NAME=%s\n' '$(LEGACY_PROJECT_NAME)' >> "$(ENV_FILE)"; \
+		echo 'Kept DOCKER_PROJECT_NAME=$(LEGACY_PROJECT_NAME): this checkout already runs containers under that old default name.'; \
+	fi
+	@if [ -f .env.docker.example ]; then \
+		added_header=0; \
+		while IFS= read -r line || [ -n "$$line" ]; do \
+			case "$$line" in \
+				''|'#'*) continue ;; \
+			esac; \
+			key="$${line%%=*}"; \
+			if [ -n "$$key" ] && ! grep -Eq "^$${key}=" "$(ENV_FILE)"; then \
+				if [ "$$added_header" = "0" ]; then \
+					printf '\n# Docker\n' >> "$(ENV_FILE)"; \
+					added_header=1; \
+				fi; \
+				printf '%s\n' "$$line" >> "$(ENV_FILE)"; \
+			fi; \
+		done < .env.docker.example; \
+	fi
+	@if ! grep -Eq '^DOCKER_PROJECT_NAME=.+' "$(ENV_FILE)"; then \
+		name="$$(basename "$(CURDIR)" | LC_ALL=C tr '[:upper:]' '[:lower:]' | LC_ALL=C sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$$//')"; \
+		name="$${name:-app}"; \
+		sed -i '/^DOCKER_PROJECT_NAME=/d' "$(ENV_FILE)"; \
+		printf 'DOCKER_PROJECT_NAME=%s\n' "$$name" >> "$(ENV_FILE)"; \
+		echo "DOCKER_PROJECT_NAME=$$name written to $(ENV_FILE)."; \
+	fi
+	$(MAKE) ensure-vendor
+	@if ! grep -Eq '^APP_KEY=base64:.+' "$(ENV_FILE)"; then \
+		$(MAKE) key-generate; \
+	fi
+	$(MAKE) ensure-node-modules
+
+ensure-vendor: require-env
+	@if [ -L vendor ]; then \
+		echo 'vendor/ is a symlink: containers only see this checkout. Delete it and run make ensure-vendor.' >&2; \
+		exit 1; \
+	fi
+	@if [ ! -f vendor/autoload.php ]; then \
+		echo 'vendor/autoload.php is missing. Installing Composer dependencies...'; \
+		$(RUN_APP) --entrypoint sh app -lc 'composer install --no-interaction --prefer-dist --no-progress'; \
+	fi
+
+ensure-node-modules: require-env
+	@if [ -f package.json ]; then \
+		$(LOAD_ENV) $(LOCAL_COMPOSE) run --rm --no-deps --entrypoint sh vite -lc '\
+			if [ ! -x node_modules/.bin/vite ]; then \
+				echo "node_modules is missing. Installing Node dependencies..."; \
+				if [ -f package-lock.json ]; then npm ci --no-fund --no-audit; else npm install --no-fund --no-audit; fi; \
+			fi'; \
+	fi
+
+build: guard-owner $(ENV_ENSURE_VENDOR) $(ENV_ENSURE_NODE_MODULES)
+	$(LOAD_ENV) $(PROD_LOCK) $(ENV_COMPOSE) up -d --build --remove-orphans
+
+up: guard-owner $(ENV_ENSURE_VENDOR) $(ENV_ENSURE_NODE_MODULES)
+	$(LOAD_ENV) $(PROD_LOCK) $(ENV_COMPOSE) up -d --remove-orphans
+
+db-up: guard-owner
+	$(LOAD_ENV) $(LOCAL_COMPOSE) up -d --wait db redis
+
+down: guard-owner
+	$(LOAD_ENV) $(PROD_LOCK) $(ENV_COMPOSE) down --remove-orphans
+
+down-volumes: guard-owner
+	$(LOAD_ENV) $(PROD_LOCK) $(ENV_COMPOSE) down -v --remove-orphans
+
+# Production: one lock for both steps, so that no other command runs between down and up.
+ifeq ($(IS_PRODUCTION),)
+restart: down up
+else
+restart: guard-owner
+	$(PROD_LOCK) $(MAKE) --no-print-directory down up
+endif
+
+logs: require-env
+	$(LOAD_ENV) $(ENV_COMPOSE) logs -f app queue scheduler db redis
+
+ps: require-env
+	$(LOAD_ENV) $(ENV_COMPOSE) ps
+
+shell: require-env
+ifeq ($(IS_PRODUCTION),)
+	$(RUN_APP) --entrypoint sh app
+else
+	$(LOAD_ENV) $(PROD_COMPOSE) exec app sh
+endif
+
+artisan: require-env
+ifeq ($(IS_PRODUCTION),)
+	$(RUN_APP) --entrypoint php app artisan $(artisan_args)
+else
+	$(LOAD_ENV) $(PROD_COMPOSE) exec app php artisan $(artisan_args)
+endif
+
+composer: require-env
+	$(RUN_APP) --entrypoint composer app $(composer_args)
+
+npm: require-env ensure-node-modules
+	$(LOAD_ENV) $(LOCAL_COMPOSE) run --rm --no-deps --entrypoint npm vite $(npm_args)
+
+key-show: require-env
+	$(RUN_APP) --entrypoint php app artisan key:generate --show --no-interaction
+
+key-generate: require-env
+	$(RUN_APP) --entrypoint php app artisan key:generate --no-interaction
+
+dump: guard-owner
+	@mkdir -p "$(dir $(dump_file))"
+	$(LOAD_ENV) $(ENV_COMPOSE) exec -T db env MYSQL_PWD="$$DB_PASSWORD" mariadb-dump --single-transaction --routines --triggers -u"$$DB_USERNAME" "$$DB_DATABASE" | gzip > "$(dump_file)"
+
+import: guard-owner
+	@test -f "$(dump_file)" || (echo 'Dump file not found: $(dump_file)' >&2; exit 1)
+	@gzip -t "$(dump_file)" || (echo 'Invalid gzip archive: $(dump_file)' >&2; exit 1)
+	$(LOAD_ENV) $(ENV_COMPOSE) exec -T db sh -lc 'mariadb -uroot -p"$$MARIADB_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS \`$$MARIADB_DATABASE\`; CREATE DATABASE \`$$MARIADB_DATABASE\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"'
+	$(LOAD_ENV) gunzip -c "$(dump_file)" | $(STRIP_DEFINER) | $(ENV_COMPOSE) exec -T db env MYSQL_PWD="$$DB_PASSWORD" mariadb -u"$$DB_USERNAME" "$$DB_DATABASE"
+
+dump-media:
+	@test -d "$(storage_dir)" || (echo 'Storage directory not found: $(storage_dir)' >&2; exit 1)
+	@mkdir -p "$(dir $(storage_dump_file))"
+	tar -czf "$(storage_dump_file)" "$(storage_dir)"
+
+import-media:
+	@test -f "$(storage_dump_file)" || (echo 'Storage archive not found: $(storage_dump_file)' >&2; exit 1)
+	@tmp_storage_dir="$$(mktemp -d)"; \
+	trap 'rm -rf "$$tmp_storage_dir"' EXIT; \
+	tar -xzf "$(storage_dump_file)" -C "$$tmp_storage_dir"; \
+	test -d "$$tmp_storage_dir/$(storage_dir)" || (echo 'Storage archive does not contain $(storage_dir)' >&2; exit 1); \
+	rm -rf "$(storage_dir)"; \
+	mkdir -p "$(dir $(storage_dir))"; \
+	mv "$$tmp_storage_dir/$(storage_dir)" "$(storage_dir)"; \
+	trap - EXIT
+
+# With TEST_RESULT_DIR set (empty by default), every make test records its result as one JSON file per run under
+# TEST_RESULT_DIR/<SHA>/ (format, and when a run is full and green: docker/test-result.sh). A project of the agent
+# queue (agent-queue-kit) sets it to <cache_dir>/test-results of its .agent-queue/config.json, for example
+# $(or $(AGENT_QUEUE_CACHE_DIR),$(HOME)/.cache/agent-queue-kit/<project>)/test-results: the queue merges a commit only
+# with a full green run of it. The output and the exit code stay the same.
+TEST_RESULT_DIR ?=
+TEST_RESULT = bash docker/test-result.sh
+PHP_TEST = $(RUN_APP_COMPOSE) -T \
+	-e APP_ENV=testing \
+	-e APP_DEBUG=true \
+	-e DB_CONNECTION=mysql \
+	-e DB_HOST=db \
+	-e DB_PORT=3306 \
+	-e DB_DATABASE="$(or $(test_database),$${MARIADB_TEST_DATABASE:-laravel_app_testing})" \
+	-e QUEUE_CONNECTION=sync \
+	-e CACHE_STORE=array \
+	-e SESSION_DRIVER=array \
+	--entrypoint php app artisan test $(test_args)
+
+test: export TEST_RESULT_ARGS = $(test_args)
+test: require-not-production require-db $(ENV_ENSURE_VENDOR) ensure-db
+	@$(LOAD_ENV) \
+	run=; [ -z "$(TEST_RESULT_DIR)" ] || run="$$(mktemp -u -t test-run.XXXXXXXX)"; status=0; \
+	[ -z "$$run" ] || $(TEST_RESULT) start "$$run" "$(TEST_RESULT_DIR)"; \
+	if [ -n "$$run" ]; then $(TEST_RESULT) step "$$run" php $(PHP_TEST); else $(PHP_TEST); fi || status=$$?; \
+	[ -z "$$run" ] || $(TEST_RESULT) finish "$$run" "$$status"; \
+	exit "$$status"
+
+# Laravel Boost MCP stdio server for this checkout: nothing but the server may write to stdout.
+boost-mcp: require-not-production require-env
+	@$(RUN_APP) -T --entrypoint php app artisan boost:mcp
+
+worktree-setup:
+	@$(WORKTREE_SH) setup
+
+worktree-archive:
+	@$(WORKTREE_SH) archive
+
+worktree-prune:
+	@$(WORKTREE_SH) prune $(if $(filter yes,$(CONFIRM)),--apply,)
+
+# deploy.sh takes the lock before git pull and holds it to the last step. make has read this file
+# before the pull: deploy.sh runs the steps in a new make, which reads the pulled one (deploy-steps).
+deploy: guard-owner
+	@test -z "$(IS_WORKTREE)" || (echo 'Refusing to deploy from a git worktree.' >&2; exit 1)
+	@DEPLOY_COMMAND='make deploy' $(DEPLOY_SH) deploy
+
+# The steps of make deploy after git pull. Only make deploy runs them, under its lock.
+deploy-steps: guard-owner
+	@DEPLOY_COMMAND='make deploy-steps' $(DEPLOY_SH) held
+	$(LOAD_ENV) $(PROD_COMPOSE) up -d --build --remove-orphans
+	$(LOAD_ENV) $(PROD_COMPOSE) exec -T app php artisan migrate --force --no-interaction
+	$(LOAD_ENV) $(PROD_COMPOSE) exec -T app php artisan queue:restart
+
+# Read only, never takes the lock: works while a deploy runs.
+deploy-status: require-env
+	@$(DEPLOY_SH) status
+	@echo 'containers:'
+	@$(LOAD_ENV) $(PROD_COMPOSE) ps -a
